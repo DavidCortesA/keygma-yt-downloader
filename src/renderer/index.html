@@ -5,151 +5,226 @@
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'self'; img-src 'self' data: https:; style-src 'self'; script-src 'self'; connect-src 'none'; object-src 'none'" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark light" />
   <title>Kerygma YT Downloader</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <!-- Íconos de línea (estilo Lucide) -->
+  <svg class="sprite" width="0" height="0" aria-hidden="true">
+    <defs>
+      <symbol id="i-video" viewBox="0 0 24 24"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/><rect x="2" y="6" width="14" height="12" rx="2"/></symbol>
+      <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></symbol>
+      <symbol id="i-settings" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></symbol>
+      <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></symbol>
+      <symbol id="i-clipboard" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></symbol>
+      <symbol id="i-folder" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+      <symbol id="i-scissors" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><path d="M8.12 8.12 12 12"/><path d="M20 4 8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8 20 20"/></symbol>
+      <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+      <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></symbol>
+    </defs>
+  </svg>
+
   <header class="topbar">
     <div class="brand">
       <svg class="logo" viewBox="0 0 64 64" aria-hidden="true">
         <defs>
           <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#ffb347" />
-            <stop offset="1" stop-color="#ff6a00" />
+            <stop offset="0" stop-color="#ff8a5c" />
+            <stop offset="1" stop-color="#ff5a2a" />
           </linearGradient>
         </defs>
-        <rect width="64" height="64" rx="15" fill="url(#lg)" />
+        <rect width="64" height="64" rx="16" fill="url(#lg)" />
         <path fill="#0a0a0a" d="M28 13h8v21h8.5L32 47 19.5 34H28z" />
         <rect x="19" y="50" width="26" height="4" rx="2" fill="#0a0a0a" />
       </svg>
-      <div class="brand-text">
-        <span class="brand-main">KERYGMA</span>
-        <span class="brand-sub">YT DOWNLOADER</span>
-      </div>
+      <span class="brand-name">Kerygma</span>
+      <span class="brand-sub">YT Downloader</span>
     </div>
-    <div class="engine">
-      <span id="engineVersion" class="engine-version">motor…</span>
-      <button id="updateBtn" class="btn ghost small" title="Descarga la última versión de yt-dlp (útil si YouTube cambia algo)">
-        Actualizar motor
+
+    <nav class="tabs" role="tablist" aria-label="Tipo de descarga">
+      <button class="tab active" data-tab="video" role="tab" aria-selected="true">
+        <svg class="icon"><use href="#i-video" /></svg><span>Video</span>
       </button>
-    </div>
+      <button class="tab" data-tab="audio" role="tab" aria-selected="false">
+        <svg class="icon"><use href="#i-music" /></svg><span>Audio</span>
+      </button>
+    </nav>
+
+    <button id="settingsBtn" class="icon-btn" title="Configuración" aria-label="Configuración">
+      <svg class="icon"><use href="#i-settings" /></svg>
+    </button>
   </header>
 
-  <main>
-    <div id="engineError" class="banner error hidden" role="alert"></div>
+  <div class="layout">
+    <!-- ============ Columna principal ============ -->
+    <section class="main-col">
+      <div id="engineError" class="banner error hidden" role="alert"></div>
 
-    <section class="card">
-      <label for="url">Enlace de YouTube</label>
-      <div class="row">
-        <input id="url" type="text" placeholder="https://youtu.be/…" autocomplete="off" spellcheck="false" autofocus />
-        <button id="pasteBtn" class="btn ghost">Pegar</button>
+      <div class="page-head">
+        <div>
+          <h1 id="pageTitle">Descargar video</h1>
+          <p id="pageSub" class="muted">Pega el enlace de YouTube y guarda el video con audio.</p>
+        </div>
+        <div id="listMeta" class="list-meta hidden">
+          <span id="listCount" class="muted"></span>
+          <button id="clearList" class="link-btn">Limpiar lista</button>
+        </div>
+      </div>
+
+      <div class="url-row">
+        <svg class="icon url-icon"><use href="#i-link" /></svg>
+        <input id="url" type="text" placeholder="https://youtu.be/…" autocomplete="off" spellcheck="false" aria-label="Enlace de YouTube" />
+        <button id="pasteBtn" class="btn ghost small"><svg class="icon"><use href="#i-clipboard" /></svg>Pegar</button>
       </div>
       <div id="urlHint" class="hint" aria-live="polite"></div>
 
-      <div id="previewLoading" class="preview loading hidden">
+      <div id="previewLoading" class="loading-card hidden">
         <div class="spinner" aria-hidden="true"></div>
         <span>Buscando video…</span>
       </div>
-      <div id="preview" class="preview hidden">
+
+      <div id="preview" class="preview-card hidden">
         <div class="thumb">
           <img id="thumb" alt="" />
           <span id="duration" class="badge"></span>
         </div>
         <div class="meta">
           <div id="title" class="title"></div>
-          <div id="uploader" class="sub"></div>
+          <div id="uploader" class="muted"></div>
         </div>
       </div>
-    </section>
 
-    <section class="card">
-      <label id="modeLabel">¿Qué quieres descargar?</label>
-      <div class="segmented" id="modeSwitch" role="radiogroup" aria-labelledby="modeLabel">
-        <button class="seg active" data-mode="video" role="radio" aria-checked="true">
-          <span class="seg-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M4 6h11a2 2 0 0 1 2 2v1.5l4-2.5v10l-4-2.5V16a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"/></svg>
-          </span>
-          <span class="seg-text"><b>Video con audio</b><small>MP4 · mejor calidad</small></span>
-        </button>
-        <button class="seg" data-mode="audio" role="radio" aria-checked="false">
-          <span class="seg-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M9 3v11.2A3.5 3.5 0 1 0 11 17V8h6V3z"/></svg>
-          </span>
-          <span class="seg-text"><b>Solo audio</b><small>MP3 o M4A</small></span>
-        </button>
-      </div>
-      <div id="audioFormats" class="chips hidden" role="radiogroup" aria-label="Formato de audio">
-        <span class="chips-label">Formato</span>
-        <button class="chip active" data-fmt="mp3" role="radio" aria-checked="true">MP3</button>
-        <button class="chip" data-fmt="m4a" role="radio" aria-checked="false">M4A</button>
-      </div>
-    </section>
-
-    <section class="card">
-      <div class="trim-head">
-        <label for="trimToggle" class="inline">Recortar fragmento</label>
-        <label class="switch" title="Descargar solo una parte del video o audio">
-          <input type="checkbox" id="trimToggle" />
-          <span class="slider"></span>
-        </label>
-      </div>
-      <div id="trimFields" class="trim-fields hidden">
-        <div class="time-field">
-          <span>Desde</span>
-          <input id="trimStart" type="text" inputmode="numeric" placeholder="0:00" autocomplete="off" spellcheck="false" />
-        </div>
-        <div class="time-field">
-          <span>Hasta</span>
-          <input id="trimEnd" type="text" inputmode="numeric" placeholder="fin del video" autocomplete="off" spellcheck="false" />
+      <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="Pegar enlace del portapapeles">
+        <div class="dz-icon"><svg class="icon"><use href="#i-link" /></svg></div>
+        <div class="dz-title">Arrastra un enlace aquí</div>
+        <div class="dz-sub">o <span class="accent-link">haz clic para pegarlo</span> desde el portapapeles</div>
+        <div class="dz-chips">
+          <span>youtube.com</span><span>youtu.be</span><span>Shorts</span><span>Música</span><span>En vivo</span>
         </div>
       </div>
-      <div id="trimHint" class="hint hidden" aria-live="polite"></div>
+
+      <ul id="queue" class="queue"></ul>
     </section>
 
-    <section class="card">
-      <label>Guardar en</label>
-      <div class="row">
-        <div id="folderPath" class="path"></div>
-        <button id="changeFolder" class="btn ghost">Cambiar</button>
-        <button id="openFolder" class="btn ghost">Abrir</button>
+    <!-- ============ Panel de opciones ============ -->
+    <aside class="side-panel">
+      <div class="side-scroll">
+        <div id="formatSection" class="field">
+          <div class="field-label">Formato de salida</div>
+          <div id="formatGrid" class="chip-grid"></div>
+          <p id="formatDesc" class="muted desc"></p>
+        </div>
+
+        <div id="qualitySection" class="field">
+          <div class="field-label"><span id="qualityLabel">Calidad</span><span id="qualityUnit" class="unit"></span></div>
+          <div id="qualitySeg" class="seg-control"></div>
+          <p id="qualityDesc" class="muted desc"></p>
+        </div>
+
+        <div class="field">
+          <div class="field-row">
+            <div class="field-label no-margin"><svg class="icon sm"><use href="#i-scissors" /></svg>Recortar fragmento</div>
+            <label class="switch" title="Descargar solo una parte">
+              <input type="checkbox" id="trimToggle" />
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div id="trimFields" class="trim-fields hidden">
+            <div class="time-field">
+              <span>Desde</span>
+              <input id="trimStart" type="text" inputmode="numeric" placeholder="0:00" autocomplete="off" spellcheck="false" />
+            </div>
+            <div class="time-field">
+              <span>Hasta</span>
+              <input id="trimEnd" type="text" inputmode="numeric" placeholder="fin del video" autocomplete="off" spellcheck="false" />
+            </div>
+          </div>
+          <p id="trimHint" class="desc hidden" aria-live="polite"></p>
+        </div>
+
+        <div class="field">
+          <div class="field-label">Guardar en</div>
+          <div class="seg-control two">
+            <button id="openFolder" class="seg-item folder" title="Abrir carpeta de destino"><span id="folderName"></span></button>
+            <button id="changeFolder" class="seg-item">Otra carpeta…</button>
+          </div>
+        </div>
       </div>
-    </section>
 
-    <button id="downloadBtn" class="btn primary" disabled>
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 3h2v9.2l3.6-3.6L18 10l-6 6-6-6 1.4-1.4L11 12.2z"/><path d="M5 18h14v2H5z"/></svg>
-      Descargar
-    </button>
-
-    <section id="progressCard" class="card hidden" aria-live="polite">
-      <div class="progress-head">
-        <span id="stage" class="stage">Preparando…</span>
-        <span id="percent" class="percent">0%</span>
+      <div class="side-foot">
+        <div id="statusText" class="status-text">Pega un enlace para empezar</div>
+        <button id="downloadBtn" class="btn primary" disabled>Descargar video</button>
       </div>
-      <div class="bar"><div id="barFill" class="bar-fill"></div></div>
-      <div class="progress-foot">
-        <span id="speedEta" class="sub"></span>
-        <button id="cancelBtn" class="btn ghost small">Cancelar</button>
+    </aside>
+  </div>
+
+  <!-- ============ Configuración ============ -->
+  <div id="modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2 id="modalTitle">Configuración</h2>
+        <button id="modalClose" class="icon-btn plain" aria-label="Cerrar"><svg class="icon"><use href="#i-x" /></svg></button>
       </div>
-    </section>
+      <div class="modal-body">
+        <div class="group-label">Apariencia</div>
+        <div class="setting">
+          <div class="setting-text"><b>Tema</b><span>Por defecto, oscuro con acentos naranja.</span></div>
+          <div class="seg-control compact" data-setting="theme">
+            <button class="seg-item" data-value="system">Sistema</button>
+            <button class="seg-item" data-value="light">Claro</button>
+            <button class="seg-item" data-value="dark">Oscuro</button>
+          </div>
+        </div>
 
-    <section id="resultCard" class="card result hidden" role="status">
-      <div class="result-icon" id="resultIcon" aria-hidden="true"></div>
-      <div class="result-body">
-        <div id="resultTitle" class="result-title"></div>
-        <div id="resultText" class="sub"></div>
+        <div class="group-label">Descarga</div>
+        <div class="setting">
+          <div class="setting-text"><b>Si el archivo ya existe</b><span>Crear copia guarda como «nombre (2)»; Reemplazar sobrescribe el anterior.</span></div>
+          <div class="seg-control compact" data-setting="onExists">
+            <button class="seg-item" data-value="copy">Crear copia</button>
+            <button class="seg-item" data-value="replace">Reemplazar</button>
+          </div>
+        </div>
+        <div class="setting">
+          <div class="setting-text"><b>Recordar formato y opciones</b><span>Al abrir, se recuerda la última pestaña, formato, calidad y carpeta de destino.</span></div>
+          <label class="switch"><input type="checkbox" data-setting="remember" /><span class="slider"></span></label>
+        </div>
+
+        <div class="group-label">Al terminar</div>
+        <div class="setting">
+          <div class="setting-text"><b>Notificación del sistema</b><span>Avisa cuando termina una descarga y la app está en segundo plano.</span></div>
+          <label class="switch"><input type="checkbox" data-setting="notify" /><span class="slider"></span></label>
+        </div>
+        <div class="setting">
+          <div class="setting-text"><b>Abrir la carpeta de destino</b><span>Muestra el archivo descargado en el Explorador o en Finder.</span></div>
+          <label class="switch"><input type="checkbox" data-setting="openFolder" /><span class="slider"></span></label>
+        </div>
+
+        <div class="group-label">Motor de descarga</div>
+        <div class="setting">
+          <div class="setting-text"><b>yt-dlp <span id="engineVersion" class="muted">…</span></b><span>Si YouTube cambia algo y las descargas fallan, actualiza el motor sin reinstalar la app.</span></div>
+          <button id="updateBtn" class="btn ghost small"><svg class="icon"><use href="#i-refresh" /></svg><span>Actualizar</span></button>
+        </div>
+
+        <div class="group-label">Acerca de</div>
+        <div class="about">
+          <svg class="logo big" viewBox="0 0 64 64" aria-hidden="true">
+            <rect width="64" height="64" rx="16" fill="url(#lg)" />
+            <path fill="#0a0a0a" d="M28 13h8v21h8.5L32 47 19.5 34H28z" />
+            <rect x="19" y="50" width="26" height="4" rx="2" fill="#0a0a0a" />
+          </svg>
+          <div class="setting-text">
+            <b>Kerygma YT Downloader</b>
+            <span id="aboutLine"></span>
+          </div>
+        </div>
+        <p class="legal">Descarga solo contenido que tengas derecho a descargar y respeta los Términos de Servicio de YouTube.</p>
       </div>
-      <button id="showFileBtn" class="btn ghost hidden">Mostrar en carpeta</button>
-    </section>
-
-    <section id="historyCard" class="card hidden">
-      <label>Descargas de esta sesión</label>
-      <ul id="historyList" class="history"></ul>
-    </section>
-  </main>
-
-  <footer>
-    Descarga solo contenido que tengas derecho a descargar y respeta los Términos de Servicio de YouTube.
-  </footer>
+    </div>
+  </div>
 
   <div id="toast" class="toast hidden" role="status"></div>
   <script src="renderer.js"></script>

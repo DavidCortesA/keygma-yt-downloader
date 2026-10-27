@@ -48,9 +48,10 @@ function copyAtomic(src, dest) {
   fs.renameSync(tmp, dest);
 }
 
+/** yt-dlp se descomprime solo en cada arranque; en equipos lentos o cargados puede tardar bastante. */
 function readVersion(binPath) {
   return new Promise((resolve) => {
-    execFile(binPath, ['--version'], { timeout: 30000, windowsHide: true }, (err, stdout) => {
+    execFile(binPath, ['--version'], { timeout: 120000, windowsHide: true }, (err, stdout) => {
       resolve(err ? null : String(stdout).trim());
     });
   });
@@ -95,7 +96,7 @@ async function resolveBinaries(ctx) {
     clearQuarantine(ctx.engineDir);
   }
 
-  return { ytdlp, ffmpeg, version: await readVersion(ytdlp) };
+  return { ytdlp, ffmpeg };
 }
 
 module.exports = { resolveBinaries, readVersion, platformDirName, YTDLP_NAME, FFMPEG_NAME };

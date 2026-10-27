@@ -11,7 +11,29 @@ const { sanitizeFilename } = require('./validate');
  * que también se puede probar con Node plano (ver scripts/smoke-test.js).
  */
 
-const VIDEO_FORMAT = 'bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/bv*+ba/b';
+const VIDEO_CONTAINERS = ['mp4', 'mkv'];
+const VIDEO_QUALITIES = ['best', '1080', '720', '480'];
+
+// Formato de audio de la interfaz → { argumento de yt-dlp, extensión del archivo, ¿con pérdida? }
+const AUDIO_FORMATS = {
+  mp3: { arg: 'mp3', ext: 'mp3', lossy: true },
+  m4a: { arg: 'm4a', ext: 'm4a', lossy: true },
+  aac: { arg: 'aac', ext: 'aac', lossy: true },
+  wav: { arg: 'wav', ext: 'wav', lossy: false },
+  flac: { arg: 'flac', ext: 'flac', lossy: false },
+  opus: { arg: 'opus', ext: 'opus', lossy: true },
+  ogg: { arg: 'vorbis', ext: 'ogg', lossy: true },
+};
+const AUDIO_BITRATES = [128, 192, 256, 320];
+
+/** Selector de formato de yt-dlp para video, con tope de altura opcional. */
+function videoSelector(container, quality) {
+  const h = quality && quality !== 'best' ? `[height<=${quality}]` : '';
+  // MP4: prioriza H.264 + AAC (se reproduce en todo). MKV: lo mejor disponible (hasta 4K).
+  return container === 'mkv'
+    ? `bv*${h}+ba/b${h}`
+    : `bv*${h}[ext=mp4]+ba[ext=m4a]/b${h}[ext=mp4]/bv*${h}+ba/b${h}`;
+}
 const PROGRESS_TEMPLATE =
   'download:[kg]%(progress.status)s|%(progress.downloaded_bytes)s|%(progress.total_bytes)s|' +
   '%(progress.total_bytes_estimate)s|%(progress.speed)s|%(progress.eta)s';
@@ -161,18 +183,29 @@ function lineSplitter(onLine) {
  * Inicia una descarga. Devuelve { promise, cancel, finalPath }.
  *
  * @param {object} bins  rutas de resolveBinaries()
- * @param {object} job   { url, title, mode: 'video'|'audio', audioFormat: 'mp3'|'m4a', outputDir,
+ * @param {object} job   { url, title, mode: 'video'|'audio', outputDir, overwrite?,
+ *                         video?: { container: 'mp4'|'mkv', quality: 'best'|'1080'|'720'|'480' },
+ *                         audio?: { format: 'mp3'|'m4a'|'aac'|'wav'|'flac'|'opus'|'ogg', bitrate: 128|192|256|320 },
  *                         section?: { start: number, end: number } }   (segundos; recorte opcional)
  * @param {(e: object) => void} onEvent  eventos { type: 'stage'|'progress', ... }
  */
 function startDownload(bins, job, onEvent = () => {}) {
-  const { url, title, mode, audioFormat, outputDir, section } = job;
+  const { url, title, mode, outputDir, section, overwrite = false } = job;
+  const video = { container: 'mp4', quality: 'best', ...job.video };
+  const audio = { format: 'mp3', bitrate: 192, ...job.audio };
+  if (!VIDEO_CONTAINERS.includes(video.container)) throw new Error('Formato de video inválido.');
+  if (!VIDEO_QUALITIES.includes(String(video.quality))) throw new Error('Calidad de video inválida.');
+  if (!AUDIO_FORMATS[audio.format]) throw new Error('Formato de audio inválido.');
+  if (!AUDIO_BITRATES.includes(Number(audio.bitrate))) throw new Error('Calidad de audio inválida.');
+
   fs.mkdirSync(outputDir, { recursive: true });
 
+  const audioInfo = AUDIO_FORMATS[audio.format];
   const suffix = section ? ` (${timeTag(section.start)} a ${timeTag(section.end)})` : '';
   const safeTitle = sanitizeFilename(title).slice(0, 120 - suffix.length);
-  const ext = mode === 'audio' ? audioFormat : 'mp4';
-  const finalPath = uniquePath(path.join(outputDir, `${safeTitle}${suffix}.${ext}`));
+  const ext = mode === 'audio' ? audioInfo.ext : video.container;
+  const wanted = path.join(outputDir, `${safeTitle}${suffix}.${ext}`);
+  const finalPath = overwrite ? wanted : uniquePath(wanted);
   const template = `${finalPath.slice(0, -path.extname(finalPath).length).replace(/%/g, '%%')}.%(ext)s`;
 
   const args = [
@@ -182,18 +215,20 @@ function startDownload(bins, job, onEvent = () => {}) {
     '--progress-template', PROGRESS_TEMPLATE,
     '--output', template,
   ];
+  if (overwrite) args.push('--force-overwrites');
 
   if (section) {
-    // yt-dlp delega el recorte en ffmpeg. En video se fuerzan cortes exactos
-    // (re-codifica solo el tramo); sin esto el corte cae en el fotograma clave más cercano.
-    args.push('--download-sections', `*${section.start}-${section.end}`);
-    if (mode === 'video') args.push('--force-keyframes-at-cuts');
+    // yt-dlp delega el recorte en ffmpeg. Se fuerzan cortes exactos (re-codifica solo el tramo):
+    // sin esto el corte cae en el punto de copia más cercano y el audio puede salir con segundos de más.
+    args.push('--download-sections', `*${section.start}-${section.end}`, '--force-keyframes-at-cuts');
   }
 
   if (mode === 'audio') {
-    args.push('-f', 'bestaudio/best', '-x', '--audio-format', audioFormat, '--audio-quality', '0', '--embed-metadata');
+    args.push('-f', 'bestaudio/best', '-x', '--audio-format', audioInfo.arg);
+    args.push('--audio-quality', audioInfo.lossy ? `${audio.bitrate}K` : '0');
+    args.push('--embed-metadata');
   } else {
-    args.push('-f', VIDEO_FORMAT, '--merge-output-format', 'mp4', '--embed-metadata');
+    args.push('-f', videoSelector(video.container, String(video.quality)), '--merge-output-format', video.container, '--embed-metadata');
   }
   args.push(url);
 
@@ -235,7 +270,7 @@ function startDownload(bins, job, onEvent = () => {}) {
     } else if (line.startsWith('[Merger]')) {
       onEvent({ type: 'stage', label: 'Uniendo video y audio', percent: 97 });
     } else if (line.startsWith('[ExtractAudio]')) {
-      onEvent({ type: 'stage', label: `Convirtiendo a ${audioFormat.toUpperCase()}`, percent: 97 });
+      onEvent({ type: 'stage', label: `Convirtiendo a ${audio.format.toUpperCase()}`, percent: 97 });
     }
   };
 
@@ -261,7 +296,7 @@ function startDownload(bins, job, onEvent = () => {}) {
       } else if (!fs.existsSync(finalPath)) {
         reject(new Error('La descarga terminó pero no se encontró el archivo final.'));
       } else {
-        resolve({ filePath: finalPath });
+        resolve({ filePath: finalPath, size: fs.statSync(finalPath).size });
       }
     });
   });
@@ -287,4 +322,13 @@ async function updateEngine(bins) {
   return stdout.trim().split(/\r?\n/).pop();
 }
 
-module.exports = { getInfo, startDownload, updateEngine, CancelledError };
+module.exports = {
+  getInfo,
+  startDownload,
+  updateEngine,
+  CancelledError,
+  VIDEO_CONTAINERS,
+  VIDEO_QUALITIES,
+  AUDIO_FORMATS,
+  AUDIO_BITRATES,
+};

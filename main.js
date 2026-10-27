@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, shell, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell, Menu, Notification, nativeTheme } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const { randomUUID } = require('crypto');
@@ -6,6 +6,8 @@ const { randomUUID } = require('crypto');
 const { resolveBinaries } = require('./src/core/binaries');
 const ytdlp = require('./src/core/ytdlp');
 const { isValidYoutubeUrl } = require('./src/core/validate');
+const { readVersion } = require('./src/core/binaries');
+const settingsSchema = require('./src/core/settings');
 
 const APP_NAME = 'Kerygma YT Downloader';
 const IS_MAC = process.platform === 'darwin';
@@ -47,27 +49,25 @@ configurePortableData();
 /* ------------------------------------------------------------------ */
 const settingsFile = () => path.join(app.getPath('userData'), 'settings.json');
 
-function defaultSettings() {
-  return {
-    outputDir: path.join(app.getPath('downloads'), 'Kerygma'),
-    mode: 'video',
-    audioFormat: 'mp3',
-  };
-}
+const defaultSettings = () => settingsSchema.defaults(path.join(app.getPath('downloads'), 'Kerygma'));
 
-function loadSettings() {
+function readStored() {
   try {
-    return { ...defaultSettings(), ...JSON.parse(fs.readFileSync(settingsFile(), 'utf8')) };
+    return JSON.parse(fs.readFileSync(settingsFile(), 'utf8'));
   } catch {
-    return defaultSettings();
+    return {};
   }
 }
 
+/** Configuración tal como la usa la app (aplica la regla de "recordar opciones"). */
+const loadSettings = () => settingsSchema.effective(readStored(), defaultSettings());
+
 function saveSettings(patch) {
-  const next = { ...loadSettings(), ...patch };
+  const stored = settingsSchema.merge(settingsSchema.merge(defaultSettings(), settingsSchema.sanitize(readStored())), patch);
   fs.mkdirSync(path.dirname(settingsFile()), { recursive: true });
-  fs.writeFileSync(settingsFile(), JSON.stringify(next, null, 2));
-  return next;
+  fs.writeFileSync(settingsFile(), JSON.stringify(stored, null, 2));
+  nativeTheme.themeSource = stored.theme;
+  return loadSettings();
 }
 
 /* ------------------------------------------------------------------ */
@@ -88,6 +88,19 @@ function loadBins(force = false) {
   return binsPromise;
 }
 
+let versionPromise = null;
+let versionFor = null;
+
+/** La primera ejecución de yt-dlp puede tardar (se descomprime solo); por eso no bloquea el arranque. */
+async function engineVersion(force = false) {
+  const bins = await loadBins();
+  if (force || !versionPromise || versionFor !== bins.ytdlp) {
+    versionFor = bins.ytdlp;
+    versionPromise = readVersion(bins.ytdlp);
+  }
+  return versionPromise;
+}
+
 /* ------------------------------------------------------------------ */
 /* Ventana                                                             */
 /* ------------------------------------------------------------------ */
@@ -96,15 +109,15 @@ const jobs = new Map(); // jobId -> { cancel }
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 860,
-    height: 780,
-    minWidth: 700,
-    minHeight: 660,
+    width: 1120,
+    height: 820,
+    minWidth: 960,
+    minHeight: 680,
     title: APP_NAME,
-    backgroundColor: '#0a0a0a',
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#0e0e10' : '#f5f5f6',
     icon: path.join(__dirname, 'src', 'renderer', 'assets', 'icon.png'),
     titleBarStyle: IS_MAC ? 'hiddenInset' : 'default',
-    trafficLightPosition: { x: 18, y: 18 },
+    trafficLightPosition: { x: 20, y: 17 },
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -155,27 +168,25 @@ function buildMenu() {
 /* ------------------------------------------------------------------ */
 function registerIpc() {
   ipcMain.handle('app:init', async () => {
-    const base = {
+    let engineError = null;
+    try {
+      await loadBins();
+    } catch (err) {
+      engineError = err.message;
+    }
+    return {
       name: APP_NAME,
       version: app.getVersion(),
+      electron: process.versions.electron,
       platform: process.platform,
       settings: loadSettings(),
+      engineError,
     };
-    try {
-      const bins = await loadBins();
-      return { ...base, engineVersion: bins.version, engineError: null };
-    } catch (err) {
-      return { ...base, engineVersion: null, engineError: err.message };
-    }
   });
 
-  ipcMain.handle('settings:save', (_e, patch) => {
-    const allowed = {};
-    if (typeof patch?.outputDir === 'string' && patch.outputDir) allowed.outputDir = patch.outputDir;
-    if (['video', 'audio'].includes(patch?.mode)) allowed.mode = patch.mode;
-    if (['mp3', 'm4a'].includes(patch?.audioFormat)) allowed.audioFormat = patch.audioFormat;
-    return saveSettings(allowed);
-  });
+  ipcMain.handle('engine:version', () => engineVersion().catch(() => null));
+
+  ipcMain.handle('settings:save', (_e, patch) => saveSettings(settingsSchema.sanitize(patch)));
 
   ipcMain.handle('dialog:chooseFolder', async (_e, current) => {
     const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
@@ -196,8 +207,10 @@ function registerIpc() {
     if (jobs.size > 0) throw new Error('Ya hay una descarga en curso.');
     if (!isValidYoutubeUrl(req?.url)) throw new Error('El enlace no parece ser de YouTube.');
     if (!['video', 'audio'].includes(req.mode)) throw new Error('Tipo de descarga inválido.');
-    const audioFormat = ['mp3', 'm4a'].includes(req.audioFormat) ? req.audioFormat : 'mp3';
     if (typeof req.outputDir !== 'string' || !req.outputDir) throw new Error('Elige una carpeta de destino.');
+
+    // Mismas reglas de validación que la configuración (formato, calidad...).
+    const opts = settingsSchema.sanitize({ video: req.video, audio: req.audio });
 
     let section = null;
     if (req.section) {
@@ -208,6 +221,7 @@ function registerIpc() {
       section = { start, end };
     }
 
+    const settings = loadSettings();
     const bins = await loadBins();
     const jobId = randomUUID();
     const send = (payload) => {
@@ -216,13 +230,27 @@ function registerIpc() {
 
     const job = ytdlp.startDownload(
       bins,
-      { url: req.url.trim(), title: req.title, mode: req.mode, audioFormat, outputDir: req.outputDir, section },
+      {
+        url: req.url.trim(),
+        title: req.title,
+        mode: req.mode,
+        outputDir: req.outputDir,
+        overwrite: settings.onExists === 'replace',
+        video: opts.video,
+        audio: opts.audio,
+        section,
+      },
       send
     );
     jobs.set(jobId, job);
 
     try {
-      return await job.promise;
+      const result = await job.promise;
+      if (settings.notify && mainWindow && !mainWindow.isFocused() && Notification.isSupported()) {
+        new Notification({ title: 'Descarga completa', body: path.basename(result.filePath) }).show();
+      }
+      if (settings.openFolder) shell.showItemInFolder(result.filePath);
+      return result;
     } catch (err) {
       if (err instanceof ytdlp.CancelledError) return { cancelled: true };
       throw err;
@@ -249,8 +277,7 @@ function registerIpc() {
     if (jobs.size > 0) throw new Error('Espera a que termine la descarga en curso.');
     const bins = await loadBins();
     const message = await ytdlp.updateEngine(bins);
-    const fresh = await loadBins(true);
-    return { message, engineVersion: fresh.version };
+    return { message, engineVersion: await engineVersion(true) };
   });
 }
 
@@ -271,10 +298,11 @@ if (!app.requestSingleInstanceLock()) {
 
   app.whenReady().then(() => {
     app.setAboutPanelOptions({ applicationName: APP_NAME, applicationVersion: app.getVersion() });
+    nativeTheme.themeSource = loadSettings().theme;
     buildMenu();
     registerIpc();
     createWindow();
-    loadBins().catch(() => {}); // precalienta; el error se informa desde app:init
+    loadBins().then(() => engineVersion()).catch(() => {}); // precalienta el motor; el error se informa desde app:init
 
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) createWindow();

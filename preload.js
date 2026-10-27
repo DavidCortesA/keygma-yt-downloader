@@ -6,6 +6,7 @@ const { contextBridge, ipcRenderer } = require('electron');
  */
 contextBridge.exposeInMainWorld('kerygma', {
   init: () => ipcRenderer.invoke('app:init'),
+  engineVersion: () => ipcRenderer.invoke('engine:version'),
   saveSettings: (patch) => ipcRenderer.invoke('settings:save', patch),
   chooseFolder: (current) => ipcRenderer.invoke('dialog:chooseFolder', current),
   getInfo: (url) => ipcRenderer.invoke('video:info', url),
