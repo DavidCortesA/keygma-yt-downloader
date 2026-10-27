@@ -1,0 +1,59 @@
+name: Build & Release
+
+# Compila nativamente en cada sistema operativo (la forma más fiable de obtener
+# el .exe portable de Windows con su ícono y metadatos correctos) y, al subir una
+# etiqueta "v*" (ej. v1.0.0), publica un GitHub Release con los archivos portables.
+# También se puede lanzar a mano desde la pestaña Actions (solo compila, no publica).
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run dist:win
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kerygma-windows-portable
+          path: dist/*-portable.exe
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run dist:mac
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kerygma-macos-portable
+          path: dist/*.zip
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [windows, macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: release-files
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: Kerygma YT Downloader ${{ github.ref_name }}
+          generate_release_notes: true
+          files: release-files/*

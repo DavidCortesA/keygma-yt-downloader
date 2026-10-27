@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; img-src 'self' data: https:; style-src 'self'; script-src 'self'; connect-src 'none'; object-src 'none'" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kerygma YT Downloader</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 64 64" aria-hidden="true">
+        <defs>
+          <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#ffb347" />
+            <stop offset="1" stop-color="#ff6a00" />
+          </linearGradient>
+        </defs>
+        <rect width="64" height="64" rx="15" fill="url(#lg)" />
+        <path fill="#0a0a0a" d="M28 13h8v21h8.5L32 47 19.5 34H28z" />
+        <rect x="19" y="50" width="26" height="4" rx="2" fill="#0a0a0a" />
+      </svg>
+      <div class="brand-text">
+        <span class="brand-main">KERYGMA</span>
+        <span class="brand-sub">YT DOWNLOADER</span>
+      </div>
+    </div>
+    <div class="engine">
+      <span id="engineVersion" class="engine-version">motor…</span>
+      <button id="updateBtn" class="btn ghost small" title="Descarga la última versión de yt-dlp (útil si YouTube cambia algo)">
+        Actualizar motor
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <div id="engineError" class="banner error hidden" role="alert"></div>
+
+    <section class="card">
+      <label for="url">Enlace de YouTube</label>
+      <div class="row">
+        <input id="url" type="text" placeholder="https://youtu.be/…" autocomplete="off" spellcheck="false" autofocus />
+        <button id="pasteBtn" class="btn ghost">Pegar</button>
+      </div>
+      <div id="urlHint" class="hint" aria-live="polite"></div>
+
+      <div id="previewLoading" class="preview loading hidden">
+        <div class="spinner" aria-hidden="true"></div>
+        <span>Buscando video…</span>
+      </div>
+      <div id="preview" class="preview hidden">
+        <div class="thumb">
+          <img id="thumb" alt="" />
+          <span id="duration" class="badge"></span>
+        </div>
+        <div class="meta">
+          <div id="title" class="title"></div>
+          <div id="uploader" class="sub"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <label id="modeLabel">¿Qué quieres descargar?</label>
+      <div class="segmented" id="modeSwitch" role="radiogroup" aria-labelledby="modeLabel">
+        <button class="seg active" data-mode="video" role="radio" aria-checked="true">
+          <span class="seg-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M4 6h11a2 2 0 0 1 2 2v1.5l4-2.5v10l-4-2.5V16a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"/></svg>
+          </span>
+          <span class="seg-text"><b>Video con audio</b><small>MP4 · mejor calidad</small></span>
+        </button>
+        <button class="seg" data-mode="audio" role="radio" aria-checked="false">
+          <span class="seg-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M9 3v11.2A3.5 3.5 0 1 0 11 17V8h6V3z"/></svg>
+          </span>
+          <span class="seg-text"><b>Solo audio</b><small>MP3 o M4A</small></span>
+        </button>
+      </div>
+      <div id="audioFormats" class="chips hidden" role="radiogroup" aria-label="Formato de audio">
+        <span class="chips-label">Formato</span>
+        <button class="chip active" data-fmt="mp3" role="radio" aria-checked="true">MP3</button>
+        <button class="chip" data-fmt="m4a" role="radio" aria-checked="false">M4A</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="trim-head">
+        <label for="trimToggle" class="inline">Recortar fragmento</label>
+        <label class="switch" title="Descargar solo una parte del video o audio">
+          <input type="checkbox" id="trimToggle" />
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div id="trimFields" class="trim-fields hidden">
+        <div class="time-field">
+          <span>Desde</span>
+          <input id="trimStart" type="text" inputmode="numeric" placeholder="0:00" autocomplete="off" spellcheck="false" />
+        </div>
+        <div class="time-field">
+          <span>Hasta</span>
+          <input id="trimEnd" type="text" inputmode="numeric" placeholder="fin del video" autocomplete="off" spellcheck="false" />
+        </div>
+      </div>
+      <div id="trimHint" class="hint hidden" aria-live="polite"></div>
+    </section>
+
+    <section class="card">
+      <label>Guardar en</label>
+      <div class="row">
+        <div id="folderPath" class="path"></div>
+        <button id="changeFolder" class="btn ghost">Cambiar</button>
+        <button id="openFolder" class="btn ghost">Abrir</button>
+      </div>
+    </section>
+
+    <button id="downloadBtn" class="btn primary" disabled>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 3h2v9.2l3.6-3.6L18 10l-6 6-6-6 1.4-1.4L11 12.2z"/><path d="M5 18h14v2H5z"/></svg>
+      Descargar
+    </button>
+
+    <section id="progressCard" class="card hidden" aria-live="polite">
+      <div class="progress-head">
+        <span id="stage" class="stage">Preparando…</span>
+        <span id="percent" class="percent">0%</span>
+      </div>
+      <div class="bar"><div id="barFill" class="bar-fill"></div></div>
+      <div class="progress-foot">
+        <span id="speedEta" class="sub"></span>
+        <button id="cancelBtn" class="btn ghost small">Cancelar</button>
+      </div>
+    </section>
+
+    <section id="resultCard" class="card result hidden" role="status">
+      <div class="result-icon" id="resultIcon" aria-hidden="true"></div>
+      <div class="result-body">
+        <div id="resultTitle" class="result-title"></div>
+        <div id="resultText" class="sub"></div>
+      </div>
+      <button id="showFileBtn" class="btn ghost hidden">Mostrar en carpeta</button>
+    </section>
+
+    <section id="historyCard" class="card hidden">
+      <label>Descargas de esta sesión</label>
+      <ul id="historyList" class="history"></ul>
+    </section>
+  </main>
+
+  <footer>
+    Descarga solo contenido que tengas derecho a descargar y respeta los Términos de Servicio de YouTube.
+  </footer>
+
+  <div id="toast" class="toast hidden" role="status"></div>
+  <script src="renderer.js"></script>
+</body>
+</html>

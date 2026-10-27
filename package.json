@@ -1,0 +1,78 @@
+{
+  "name": "kerygma-yt-downloader",
+  "productName": "Kerygma YT Downloader",
+  "version": "1.0.0",
+  "description": "Kerygma YT Downloader — descarga videos de YouTube (video con audio o solo audio). App portable para Windows y macOS.",
+  "main": "main.js",
+  "author": "Kerygma",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "fetch-bins": "node scripts/fetch-binaries.js",
+    "icon": "electron scripts/make-icon.js",
+    "screenshot": "electron scripts/screenshot.js",
+    "test": "node scripts/smoke-test.js",
+    "dist:mac": "node scripts/fetch-binaries.js mac-x64 mac-arm64 && electron-builder --mac --x64 --arm64",
+    "dist:win": "node scripts/fetch-binaries.js win-x64 && electron-builder --win --x64",
+    "dist": "npm run dist:mac && npm run dist:win"
+  },
+  "devDependencies": {
+    "electron": "^45.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "org.kerygma.ytdownloader",
+    "productName": "Kerygma YT Downloader",
+    "copyright": "Kerygma",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "bin/${os}-${arch}",
+        "to": "bin",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "artifactName": "Kerygma-YT-Downloader-${version}-${os}-${arch}.${ext}",
+    "mac": {
+      "category": "public.app-category.utilities",
+      "icon": "build/icon.png",
+      "identity": "-",
+      "target": [
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ]
+    },
+    "win": {
+      "icon": "build/icon.png",
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "portable": {
+      "artifactName": "Kerygma-YT-Downloader-${version}-portable.exe"
+    },
+    "afterPack": "scripts/after-pack.js"
+  }
+}
