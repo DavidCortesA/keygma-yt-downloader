@@ -30,7 +30,7 @@ let downloadCalls = 0;
 let releaseFirst = null;
 
 ipcMain.handle('app:init', () => ({
-  name: 'Kerygma YT Downloader', version: '1.0.0', electron: process.versions.electron,
+  name: 'Kerygma Downloader', version: '1.1.0', electron: process.versions.electron,
   platform: process.platform, settings, engineError: null,
 }));
 ipcMain.handle('engine:version', () => '2026.10.26');
@@ -41,7 +41,7 @@ ipcMain.handle('settings:save', (_e, patch) => {
 });
 ipcMain.handle('video:info', async () => {
   await sleep(150);
-  return { id: 'x', title: 'Predicación: El mensaje del Reino — Serie completa', uploader: 'Canal Kerygma', duration: 3725, thumbnail: THUMB };
+  return { id: 'x', title: 'Predicación: El mensaje del Reino — Serie completa', uploader: 'Canal Kerygma', platform: 'YouTube', duration: 3725, thumbnail: THUMB };
 });
 ipcMain.handle('download:start', async (e, req) => {
   downloadCalls += 1;

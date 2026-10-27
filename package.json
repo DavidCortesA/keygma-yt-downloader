@@ -1,8 +1,8 @@
 {
-  "name": "kerygma-yt-downloader",
-  "productName": "Kerygma YT Downloader",
-  "version": "1.0.0",
-  "description": "Descarga videos de YouTube con audio o solo el audio, en el formato y la calidad que elijas. Para Windows y macOS; hermano de Kerygma Converter.",
+  "name": "kerygma-downloader",
+  "productName": "Kerygma Downloader",
+  "version": "1.1.0",
+  "description": "Descarga videos de YouTube, Facebook, TikTok, Instagram y Vimeo con audio, o solo el audio. Para Windows y macOS; hermano de Kerygma Converter.",
   "main": "main.js",
   "author": "Kerygma",
   "license": "MIT",
@@ -23,7 +23,7 @@
   },
   "build": {
     "appId": "org.kerygma.ytdownloader",
-    "productName": "Kerygma YT Downloader",
+    "productName": "Kerygma Downloader",
     "copyright": "Kerygma",
     "directories": {
       "output": "dist",
@@ -44,7 +44,7 @@
         ]
       }
     ],
-    "artifactName": "Kerygma-YT-Downloader-${version}-${os}-${arch}.${ext}",
+    "artifactName": "Kerygma-Downloader-${version}-${os}-${arch}.${ext}",
     "mac": {
       "category": "public.app-category.utilities",
       "icon": "build/icon-mac.png",
@@ -77,12 +77,12 @@
       ]
     },
     "portable": {
-      "artifactName": "Kerygma-YT-Downloader-${version}-Windows-Portable.${ext}"
+      "artifactName": "Kerygma-Downloader-${version}-Windows-Portable.${ext}"
     },
     "afterPack": "scripts/after-pack.js",
     "dmg": {
-      "title": "Kerygma YT Downloader",
-      "artifactName": "Kerygma-YT-Downloader-${version}-Mac-${arch}.${ext}"
+      "title": "Kerygma Downloader",
+      "artifactName": "Kerygma-Downloader-${version}-Mac-${arch}.${ext}"
     },
     "nsis": {
       "oneClick": false,
@@ -91,12 +91,12 @@
       "installerLanguages": [
         "es_ES"
       ],
-      "menuCategory": "Kerygma YT Downloader",
-      "shortcutName": "Kerygma YT Downloader",
-      "uninstallDisplayName": "Kerygma YT Downloader",
+      "menuCategory": "Kerygma Downloader",
+      "shortcutName": "Kerygma Downloader",
+      "uninstallDisplayName": "Kerygma Downloader",
       "deleteAppDataOnUninstall": true,
       "include": "build/installer.nsh",
-      "artifactName": "Kerygma-YT-Downloader-${version}-Windows-Instalador.${ext}"
+      "artifactName": "Kerygma-Downloader-${version}-Windows-Instalador.${ext}"
     }
   }
 }

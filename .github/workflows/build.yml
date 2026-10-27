@@ -1,4 +1,4 @@
-# Compila Kerygma YT Downloader en cada sistema y, al subir una etiqueta "v*"
+# Compila Kerygma Downloader en cada sistema y, al subir una etiqueta "v*"
 # (git tag v1.0.0 && git push origin v1.0.0), publica un GitHub Release con cada
 # instalador como descarga independiente. Lanzado a mano desde Actions, solo compila
 # y deja cada versión como un artifact separado.
@@ -54,30 +54,30 @@ jobs:
       # El .dmg lleva el tipo de Mac (Apple-Silicon / Intel) en lugar de arm64 / x64.
       - name: Empaquetar Mac
         if: runner.os == 'macOS'
-        run: npx electron-builder --mac --${{ matrix.arch }} --publish never "-c.dmg.artifactName=Kerygma-YT-Downloader-\${version}-Mac-${{ matrix.label }}.\${ext}"
+        run: npx electron-builder --mac --${{ matrix.arch }} --publish never "-c.dmg.artifactName=Kerygma-Downloader-\${version}-Mac-${{ matrix.label }}.\${ext}"
 
       - name: Subir instalador de Windows
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v4
         with:
-          name: Kerygma YT Downloader - Windows Instalador
-          path: dist/Kerygma-YT-Downloader-*-Windows-Instalador.exe
+          name: Kerygma Downloader - Windows Instalador
+          path: dist/Kerygma-Downloader-*-Windows-Instalador.exe
           if-no-files-found: error
 
       - name: Subir versión portable de Windows
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v4
         with:
-          name: Kerygma YT Downloader - Windows Portable
-          path: dist/Kerygma-YT-Downloader-*-Windows-Portable.exe
+          name: Kerygma Downloader - Windows Portable
+          path: dist/Kerygma-Downloader-*-Windows-Portable.exe
           if-no-files-found: error
 
       - name: Subir instalador de Mac
         if: runner.os == 'macOS'
         uses: actions/upload-artifact@v4
         with:
-          name: Kerygma YT Downloader - Mac ${{ matrix.label }}
-          path: dist/Kerygma-YT-Downloader-*-Mac-${{ matrix.label }}.dmg
+          name: Kerygma Downloader - Mac ${{ matrix.label }}
+          path: dist/Kerygma-Downloader-*-Mac-${{ matrix.label }}.dmg
           if-no-files-found: error
 
   release:
@@ -92,6 +92,6 @@ jobs:
 
       - uses: softprops/action-gh-release@v2
         with:
-          name: Kerygma YT Downloader ${{ github.ref_name }}
+          name: Kerygma Downloader ${{ github.ref_name }}
           generate_release_notes: true
           files: instaladores/*

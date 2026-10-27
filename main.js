@@ -5,12 +5,13 @@ const { randomUUID } = require('crypto');
 
 const { resolveBinaries } = require('./src/core/binaries');
 const ytdlp = require('./src/core/ytdlp');
-const { isValidYoutubeUrl } = require('./src/core/validate');
+const { isSupportedUrl, detectPlatform } = require('./src/core/validate');
 const { readVersion } = require('./src/core/binaries');
 const settingsSchema = require('./src/core/settings');
 
-const APP_NAME = 'Kerygma YT Downloader';
+const APP_NAME = 'Kerygma Downloader';
 const IS_MAC = process.platform === 'darwin';
+const UNSUPPORTED_URL = 'El enlace no es de un video de YouTube, Facebook, TikTok, Instagram o Vimeo.';
 
 /* ------------------------------------------------------------------ */
 /* Modo portable: dónde guardar la configuración                       */
@@ -43,6 +44,20 @@ function configurePortableData() {
   }
 }
 configurePortableData();
+
+// Hasta la 1.0 la app se llamaba "Kerygma YT Downloader" y su carpeta de datos tenía ese
+// nombre. Si la carpeta nueva aún no tiene configuración, se copia la anterior.
+function migrateOldSettings() {
+  const target = path.join(app.getPath('userData'), 'settings.json');
+  const old = path.join(app.getPath('appData'), 'Kerygma YT Downloader', 'settings.json');
+  if (fs.existsSync(target) || !fs.existsSync(old)) return;
+  try {
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.copyFileSync(old, target);
+  } catch {
+    /* sin migración: se usan los valores de fábrica */
+  }
+}
 
 /* ------------------------------------------------------------------ */
 /* Configuración persistente                                           */
@@ -212,14 +227,14 @@ function registerIpc() {
   });
 
   ipcMain.handle('video:info', async (_e, url) => {
-    if (!isValidYoutubeUrl(url)) throw new Error('El enlace no parece ser de YouTube.');
+    if (!isSupportedUrl(url)) throw new Error(UNSUPPORTED_URL);
     const bins = await loadBins();
-    return ytdlp.getInfo(bins, url.trim());
+    return { ...(await ytdlp.getInfo(bins, url.trim())), platform: detectPlatform(url).name };
   });
 
   ipcMain.handle('download:start', async (e, req) => {
     if (jobs.size > 0) throw new Error('Ya hay una descarga en curso.');
-    if (!isValidYoutubeUrl(req?.url)) throw new Error('El enlace no parece ser de YouTube.');
+    if (!isSupportedUrl(req?.url)) throw new Error(UNSUPPORTED_URL);
     if (!['video', 'audio'].includes(req.mode)) throw new Error('Tipo de descarga inválido.');
     if (typeof req.outputDir !== 'string' || !req.outputDir) throw new Error('Elige una carpeta de destino.');
 
@@ -312,6 +327,7 @@ if (!app.requestSingleInstanceLock()) {
 
   app.whenReady().then(() => {
     app.setAboutPanelOptions({ applicationName: APP_NAME, applicationVersion: app.getVersion() });
+    migrateOldSettings();
     nativeTheme.themeSource = loadSettings().theme;
     buildMenu();
     registerIpc();

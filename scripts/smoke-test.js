@@ -18,7 +18,7 @@ const os = require('os');
 const path = require('path');
 const { execFile } = require('child_process');
 
-const { isValidYoutubeUrl, sanitizeFilename } = require('../src/core/validate');
+const { detectPlatform, isSupportedUrl, sanitizeFilename } = require('../src/core/validate');
 const { resolveBinaries, readVersion } = require('../src/core/binaries');
 const settings = require('../src/core/settings');
 const ytdlp = require('../src/core/ytdlp');
@@ -36,16 +36,34 @@ function probeDuration(ffmpeg, file) {
 }
 
 function offline() {
-  const valid = [
-    'https://youtu.be/06LjLWnkO0M?si=gw1naXB7VqMivS7J',
-    'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-    'https://www.youtube.com/watch?feature=share&v=dQw4w9WgXcQ',
-    'https://m.youtube.com/shorts/abcdefghijk',
-    'youtube.com/watch?v=dQw4w9WgXcQ',
+  // Enlace → plataforma esperada.
+  const valid = {
+    'https://youtu.be/06LjLWnkO0M?si=gw1naXB7VqMivS7J': 'youtube',
+    'https://www.youtube.com/watch?v=dQw4w9WgXcQ': 'youtube',
+    'https://www.youtube.com/watch?feature=share&v=dQw4w9WgXcQ': 'youtube',
+    'https://m.youtube.com/shorts/abcdefghijk': 'youtube',
+    'youtube.com/watch?v=dQw4w9WgXcQ': 'youtube',
+    'https://www.facebook.com/watch/?v=1234567890': 'facebook',
+    'https://www.facebook.com/reel/1234567890123': 'facebook',
+    'https://www.facebook.com/share/v/1AbCdEfGhI/': 'facebook',
+    'https://fb.watch/abcDEF123/': 'facebook',
+    'https://www.facebook.com/IglesiaKerygma/videos/1234567890/': 'facebook',
+    'https://www.tiktok.com/@usuario.oficial/video/7300000000000000000': 'tiktok',
+    'https://vm.tiktok.com/ZMabc123/': 'tiktok',
+    'https://www.tiktok.com/t/ZTabc123/': 'tiktok',
+    'https://www.instagram.com/reel/C1a2B3c4D5e/': 'instagram',
+    'https://www.instagram.com/p/C1a2B3c4D5e/?igsh=abc': 'instagram',
+    'https://vimeo.com/123456789': 'vimeo',
+    'https://player.vimeo.com/video/123456789?h=abc': 'vimeo',
+    'https://vimeo.com/channels/staffpicks/123456789': 'vimeo',
+  };
+  const invalid = [
+    '', 'hola', null, 'https://example.com/video/123', 'https://youtube.com/watch?v=corto',
+    'https://www.facebook.com/IglesiaKerygma', 'https://www.tiktok.com/@usuario', 'https://www.instagram.com/usuario/',
+    'https://vimeo.com/usuario', 'https://notyoutube.com.evil.com/watch?v=dQw4w9WgXcQ',
   ];
-  const invalid = ['', 'hola', 'https://vimeo.com/123456789', 'https://youtube.com/watch?v=corto', null];
-  valid.forEach((u) => assert.ok(isValidYoutubeUrl(u), `debería ser válida: ${u}`));
-  invalid.forEach((u) => assert.ok(!isValidYoutubeUrl(u), `debería ser inválida: ${u}`));
+  Object.entries(valid).forEach(([u, id]) => assert.strictEqual(detectPlatform(u)?.id, id, `debería ser de ${id}: ${u}`));
+  invalid.forEach((u) => assert.ok(!isSupportedUrl(u), `debería ser inválida: ${u}`));
 
   assert.strictEqual(sanitizeFilename('A/B:C*D?"E<F>G|H'), 'ABCDEFGH');
   assert.strictEqual(sanitizeFilename('  hola.  '), 'hola');

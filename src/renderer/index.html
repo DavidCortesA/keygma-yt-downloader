@@ -6,7 +6,7 @@
         content="default-src 'self'; img-src 'self' data: https:; style-src 'self'; script-src 'self'; connect-src 'none'; object-src 'none'" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="dark light" />
-  <title>Kerygma YT Downloader</title>
+  <title>Kerygma Downloader</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -41,7 +41,7 @@
         <g stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M16 7v11.5M11.5 14l4.5 4.5 4.5-4.5" /><path d="M8.5 19.5v2.5a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-2.5" /></g>
       </svg>
       <span class="brand-name">Kerygma</span>
-      <span class="brand-sub">YT Downloader</span>
+      <span class="brand-sub">Downloader</span>
     </div>
 
     <nav class="tabs" role="tablist" aria-label="Tipo de descarga">
@@ -66,7 +66,7 @@
       <div class="page-head">
         <div>
           <h1 id="pageTitle">Descargar video</h1>
-          <p id="pageSub" class="muted">Pega el enlace de YouTube y guarda el video con audio.</p>
+          <p id="pageSub" class="muted">Pega el enlace de un video y guárdalo con audio.</p>
         </div>
         <div id="listMeta" class="list-meta hidden">
           <span id="listCount" class="muted"></span>
@@ -76,7 +76,7 @@
 
       <div class="url-row">
         <svg class="icon url-icon"><use href="#i-link" /></svg>
-        <input id="url" type="text" placeholder="https://youtu.be/…" autocomplete="off" spellcheck="false" aria-label="Enlace de YouTube" />
+        <input id="url" type="text" placeholder="Enlace de YouTube, Facebook, TikTok, Instagram o Vimeo" autocomplete="off" spellcheck="false" aria-label="Enlace del video" />
         <button id="pasteBtn" class="btn ghost small"><svg class="icon"><use href="#i-clipboard" /></svg>Pegar</button>
       </div>
       <div id="urlHint" class="hint" aria-live="polite"></div>
@@ -102,7 +102,7 @@
         <div class="dz-title">Arrastra un enlace aquí</div>
         <div class="dz-sub">o <span class="accent-link">haz clic para pegarlo</span> desde el portapapeles</div>
         <div class="dz-chips">
-          <span>youtube.com</span><span>youtu.be</span><span>Shorts</span><span>Música</span><span>En vivo</span>
+          <span>YouTube</span><span>Facebook</span><span>TikTok</span><span>Instagram</span><span>Vimeo</span>
         </div>
       </div>
 
@@ -204,7 +204,7 @@
 
         <div class="group-label">Motor de descarga</div>
         <div class="setting">
-          <div class="setting-text"><b>yt-dlp <span id="engineVersion" class="muted">…</span></b><span>Si YouTube cambia algo y las descargas fallan, actualiza el motor sin reinstalar la app.</span></div>
+          <div class="setting-text"><b>yt-dlp <span id="engineVersion" class="muted">…</span></b><span>Si un sitio cambia algo y las descargas fallan, actualiza el motor sin reinstalar la app.</span></div>
           <button id="updateBtn" class="btn ghost small"><svg class="icon"><use href="#i-refresh" /></svg><span>Actualizar</span></button>
         </div>
 
@@ -215,11 +215,11 @@
             <g stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M16 7v11.5M11.5 14l4.5 4.5 4.5-4.5" /><path d="M8.5 19.5v2.5a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-2.5" /></g>
           </svg>
           <div class="setting-text">
-            <b>Kerygma YT Downloader</b>
+            <b>Kerygma Downloader</b>
             <span id="aboutLine"></span>
           </div>
         </div>
-        <p class="legal">Descarga solo contenido que tengas derecho a descargar y respeta los Términos de Servicio de YouTube.</p>
+        <p class="legal">Descarga solo contenido que tengas derecho a descargar y respeta los Términos de Servicio de cada sitio.</p>
       </div>
     </div>
   </div>

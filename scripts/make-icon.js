@@ -45,7 +45,7 @@ const sidebar = `
     <div style="position:absolute;top:58px;left:0;right:0;display:flex;flex-direction:column;align-items:center">
       <div style="filter:drop-shadow(0 8px 18px rgba(229,72,42,.45))">${logoSvg(64, { id: 'sb' })}</div>
       <div style="margin-top:22px;color:#f2f2f4;font-size:20px;font-weight:700;letter-spacing:-.02em">Kerygma</div>
-      <div style="margin-top:1px;color:#a3a5ae;font-size:14px;font-weight:500">YT Downloader</div>
+      <div style="margin-top:1px;color:#a3a5ae;font-size:14px;font-weight:500">Downloader</div>
     </div>
     <div style="position:absolute;bottom:26px;left:0;right:0;text-align:center;color:#6e707a;font-size:10.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase">Video · Audio</div>
   </div>`;
@@ -55,7 +55,7 @@ const header = `
     ${logoSvg(30, { id: 'hd' })}
     <div style="line-height:1.1">
       <div style="color:#f2f2f4;font-size:13px;font-weight:700;letter-spacing:-.01em">Kerygma</div>
-      <div style="color:#a3a5ae;font-size:10.5px">YT Downloader</div>
+      <div style="color:#a3a5ae;font-size:10.5px">Downloader</div>
     </div>
   </div>`;
 

@@ -30,10 +30,16 @@ const AUDIO_BITRATES = [128, 192, 256, 320];
 function videoSelector(container, quality) {
   const h = quality && quality !== 'best' ? `[height<=${quality}]` : '';
   // MP4: prioriza H.264 + AAC (se reproduce en todo). MKV: lo mejor disponible (hasta 4K).
+  // Los "b" del final cubren los sitios que entregan video y audio en un solo archivo
+  // (TikTok, Facebook, Instagram, Vimeo).
   return container === 'mkv'
     ? `bv*${h}+ba/b${h}`
     : `bv*${h}[ext=mp4]+ba[ext=m4a]/b${h}[ext=mp4]/bv*${h}+ba/b${h}`;
 }
+
+// Orden de preferencia para MP4: H.264 y AAC primero. Sin esto, YouTube puede elegir AV1
+// dentro de MP4 y TikTok HEVC, que no abren en todos los equipos.
+const MP4_SORT = 'vcodec:h264,acodec:aac';
 const PROGRESS_TEMPLATE =
   'download:[kg]%(progress.status)s|%(progress.downloaded_bytes)s|%(progress.total_bytes)s|' +
   '%(progress.total_bytes_estimate)s|%(progress.speed)s|%(progress.eta)s';
@@ -99,14 +105,19 @@ function friendlyError(stderr, code) {
   const line =
     text.split(/\r?\n/).filter((l) => l.includes('ERROR:')).pop() || text.trim().split(/\r?\n/).pop() || '';
 
-  if (/not available|unavailable|private video|removed/i.test(line))
-    return 'El video no está disponible (privado, eliminado o restringido en tu región).';
-  if (/sign in to confirm|not a bot|login required/i.test(line))
-    return 'YouTube pide verificación. Prueba "Actualizar motor" e inténtalo de nuevo.';
+  if (/sign in to confirm|not a bot/i.test(line))
+    return 'El sitio pide verificar que no eres un robot. Prueba "Actualizar motor" e inténtalo de nuevo.';
+  // Facebook, Instagram y Vimeo piden iniciar sesión para lo privado o restringido.
+  if (/login required|log in|logged-in|cookies|registered users|requires authentication|private/i.test(line))
+    return 'Este video requiere iniciar sesión (es privado o de acceso restringido). Por ahora solo se pueden descargar videos públicos.';
+  if (/not available|unavailable|removed|does not exist|no video/i.test(line))
+    return 'El video no está disponible (eliminado, privado o restringido en tu región).';
+  if (/unsupported url/i.test(line))
+    return 'Ese enlace no tiene un video que se pueda descargar.';
   if (/403|forbidden/i.test(line))
-    return 'YouTube bloqueó la descarga (403). Presiona "Actualizar motor" e inténtalo de nuevo.';
+    return 'El sitio bloqueó la descarga (403). Presiona "Actualizar motor" e inténtalo de nuevo.';
   if (/unable to download|timed out|network|resolve|connection/i.test(line))
-    return 'No se pudo conectar a YouTube. Revisa tu conexión a internet.';
+    return 'No se pudo conectar con el sitio. Revisa tu conexión a internet.';
   if (/ffmpeg|ffprobe/i.test(line)) return `Error al procesar el archivo con ffmpeg: ${line}`;
   return line.replace(/^ERROR:\s*(\[[^\]]+\]\s*)?/, '') || `yt-dlp terminó con código ${code}.`;
 }
@@ -229,6 +240,7 @@ function startDownload(bins, job, onEvent = () => {}) {
     args.push('--embed-metadata');
   } else {
     args.push('-f', videoSelector(video.container, String(video.quality)), '--merge-output-format', video.container, '--embed-metadata');
+    if (video.container === 'mp4') args.push('-S', MP4_SORT);
   }
   args.push(url);
 

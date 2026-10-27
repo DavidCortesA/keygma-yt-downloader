@@ -1,4 +1,4 @@
-/* Interfaz de Kerygma YT Downloader. Habla con el proceso principal solo a través de window.kerygma. */
+/* Interfaz de Kerygma Downloader. Habla con el proceso principal solo a través de window.kerygma. */
 (() => {
   const $ = (id) => document.getElementById(id);
   const api = window.kerygma;
@@ -30,7 +30,7 @@
   const TAB_TEXT = {
     video: {
       title: 'Descargar video',
-      sub: 'Pega el enlace de YouTube y guarda el video con audio en alta calidad.',
+      sub: 'Pega el enlace de un video de YouTube, Facebook, TikTok, Instagram o Vimeo.',
       button: 'Descargar video',
     },
     audio: {
@@ -79,7 +79,8 @@
   /* ------------------------------------------------------------------ */
   const pad = (n) => String(n).padStart(2, '0');
   const basename = (p) => String(p).split(/[\\/]/).filter(Boolean).pop() || '';
-  const looksLikeYoutube = (text) => /(youtube\.com|youtu\.be)\//i.test(text);
+  // Filtro rápido mientras se escribe; la validación completa la hace el proceso principal.
+  const looksSupported = (text) => /(youtube\.com|youtu\.be|facebook\.com|fb\.watch|tiktok\.com|instagram\.com|vimeo\.com)\//i.test(text);
 
   function formatDuration(sec) {
     if (!sec) return '';
@@ -435,7 +436,7 @@
 
   function showPreview(info) {
     el.title.textContent = info.title;
-    el.uploader.textContent = info.uploader || '';
+    el.uploader.textContent = [info.platform, info.uploader].filter(Boolean).join(' · ');
     el.duration.textContent = formatDuration(info.duration);
     el.duration.classList.toggle('hidden', !info.duration);
     if (info.thumbnail) el.thumb.src = info.thumbnail;
@@ -477,7 +478,7 @@
     clearPreview();
 
     if (!url) return setHint('');
-    if (!looksLikeYoutube(url)) return setHint('Pega un enlace de YouTube (youtube.com o youtu.be).', true);
+    if (!looksSupported(url)) return setHint('Pega un enlace de YouTube, Facebook, TikTok, Instagram o Vimeo.', true);
 
     setHint('');
     debounce = setTimeout(() => fetchInfo(url), 450);

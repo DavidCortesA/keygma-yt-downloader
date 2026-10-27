@@ -29,7 +29,7 @@
 ; ---------- Bienvenida (usa installerSidebar.bmp) ----------
 !macro customWelcomePage
   !define MUI_WELCOMEPAGE_TITLE "Bienvenido a ${PRODUCT_NAME}"
-  !define MUI_WELCOMEPAGE_TEXT "Descarga videos de YouTube con audio, o solo el audio, en el formato y la calidad que elijas.$\r$\n$\r$\nHaz clic en Siguiente para continuar."
+  !define MUI_WELCOMEPAGE_TEXT "Descarga videos de YouTube, Facebook, TikTok, Instagram y Vimeo con audio, o solo el audio, en el formato y la calidad que elijas.$\r$\n$\r$\nHaz clic en Siguiente para continuar."
   !insertmacro MUI_PAGE_WELCOME
 !macroend
 
