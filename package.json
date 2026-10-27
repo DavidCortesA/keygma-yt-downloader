@@ -2,7 +2,7 @@
   "name": "kerygma-yt-downloader",
   "productName": "Kerygma YT Downloader",
   "version": "1.0.0",
-  "description": "Kerygma YT Downloader — descarga videos de YouTube (video con audio o solo audio). App portable para Windows y macOS.",
+  "description": "Descarga videos de YouTube con audio o solo el audio, en el formato y la calidad que elijas. Para Windows y macOS; hermano de Kerygma Converter.",
   "main": "main.js",
   "author": "Kerygma",
   "license": "MIT",
@@ -13,8 +13,8 @@
     "icon": "electron scripts/make-icon.js",
     "screenshot": "electron scripts/screenshot.js",
     "test": "node scripts/smoke-test.js",
-    "dist:mac": "node scripts/fetch-binaries.js mac-x64 mac-arm64 && electron-builder --mac --x64 --arm64",
-    "dist:win": "node scripts/fetch-binaries.js win-x64 && electron-builder --win --x64",
+    "dist:mac": "node scripts/fetch-binaries.js mac-x64 mac-arm64 && electron-builder --mac --x64 --arm64 --publish never",
+    "dist:win": "node scripts/fetch-binaries.js win-x64 && electron-builder --win --x64 --publish never",
     "dist": "npm run dist:mac && npm run dist:win"
   },
   "devDependencies": {
@@ -47,11 +47,11 @@
     "artifactName": "Kerygma-YT-Downloader-${version}-${os}-${arch}.${ext}",
     "mac": {
       "category": "public.app-category.utilities",
-      "icon": "build/icon.png",
+      "icon": "build/icon-mac.png",
       "identity": "-",
       "target": [
         {
-          "target": "zip",
+          "target": "dmg",
           "arch": [
             "x64",
             "arm64"
@@ -63,6 +63,12 @@
       "icon": "build/icon.png",
       "target": [
         {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
           "target": "portable",
           "arch": [
             "x64"
@@ -71,8 +77,26 @@
       ]
     },
     "portable": {
-      "artifactName": "Kerygma-YT-Downloader-${version}-portable.exe"
+      "artifactName": "Kerygma-YT-Downloader-${version}-Windows-Portable.${ext}"
     },
-    "afterPack": "scripts/after-pack.js"
+    "afterPack": "scripts/after-pack.js",
+    "dmg": {
+      "title": "Kerygma YT Downloader",
+      "artifactName": "Kerygma-YT-Downloader-${version}-Mac-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "language": "3082",
+      "installerLanguages": [
+        "es_ES"
+      ],
+      "menuCategory": "Kerygma YT Downloader",
+      "shortcutName": "Kerygma YT Downloader",
+      "uninstallDisplayName": "Kerygma YT Downloader",
+      "deleteAppDataOnUninstall": true,
+      "include": "build/installer.nsh",
+      "artifactName": "Kerygma-YT-Downloader-${version}-Windows-Instalador.${ext}"
+    }
   }
 }

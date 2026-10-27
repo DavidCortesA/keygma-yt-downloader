@@ -107,6 +107,20 @@ async function engineVersion(force = false) {
 let mainWindow = null;
 const jobs = new Map(); // jobId -> { cancel }
 
+// En Windows y Linux los botones de la ventana se dibujan sobre la barra superior de la app
+// (como en Kerygma Converter); deben coincidir con --bg y --muted de styles.css.
+const TITLEBAR = {
+  dark: { color: '#0e0e10', symbolColor: '#8e8e98', height: 60 },
+  light: { color: '#f5f5f6', symbolColor: '#5f5f69', height: 60 },
+};
+const titlebarColors = () => TITLEBAR[nativeTheme.shouldUseDarkColors ? 'dark' : 'light'];
+
+nativeTheme.on('updated', () => {
+  if (!mainWindow) return;
+  mainWindow.setBackgroundColor(titlebarColors().color);
+  if (!IS_MAC) mainWindow.setTitleBarOverlay(titlebarColors());
+});
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1120,
@@ -114,10 +128,10 @@ function createWindow() {
     minWidth: 960,
     minHeight: 680,
     title: APP_NAME,
-    backgroundColor: nativeTheme.shouldUseDarkColors ? '#0e0e10' : '#f5f5f6',
+    backgroundColor: titlebarColors().color,
     icon: path.join(__dirname, 'src', 'renderer', 'assets', 'icon.png'),
-    titleBarStyle: IS_MAC ? 'hiddenInset' : 'default',
-    trafficLightPosition: { x: 20, y: 17 },
+    titleBarStyle: IS_MAC ? 'hiddenInset' : 'hidden',
+    ...(IS_MAC ? { trafficLightPosition: { x: 20, y: 22 } } : { titleBarOverlay: titlebarColors() }),
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),

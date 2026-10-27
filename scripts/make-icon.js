@@ -1,6 +1,13 @@
 /**
- * Genera el ícono de la app (build/icon.png) renderizando un SVG con Electron.
- * electron-builder convierte ese PNG a .icns (macOS) y .ico (Windows).
+ * Genera el logo y las imágenes de marca renderizando SVG/HTML con Electron:
+ *   build/icon.png               1024 px, ícono de Windows (electron-builder lo pasa a .ico)
+ *   build/icon-mac.png           1024 px con margen y sombra, como los íconos de macOS (.icns)
+ *   src/renderer/assets/icon.png 512 px, ícono de la ventana en desarrollo
+ *   build/installerSidebar.bmp   164×314, bienvenida y pantalla final del instalador de Windows
+ *   build/installerHeader.bmp    150×57, cabecera de las páginas internas del instalador
+ *
+ * Mismo cuadrado coral y trazo blanco que Kerygma Converter; el símbolo es una flecha
+ * que baja a una bandeja (Converter usa barras de onda).
  *
  * Uso:  npm run icon
  */
@@ -8,58 +15,120 @@ const { app, BrowserWindow } = require('electron');
 const fs = require('fs');
 const path = require('path');
 
-const SIZE = 1024;
+const ROOT = path.join(__dirname, '..');
+const BG = '#16171b';
+const FONT = "-apple-system, 'Segoe UI Variable Display', 'Segoe UI', system-ui, sans-serif";
+const GLYPH = '<path d="M16 7v11.5M11.5 14l4.5 4.5 4.5-4.5"/><path d="M8.5 19.5v2.5a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-2.5"/>';
 
-const SVG = `
-<svg xmlns="http://www.w3.org/2000/svg" width="${SIZE}" height="${SIZE}" viewBox="0 0 1024 1024">
-  <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#ffb347"/>
-      <stop offset="1" stop-color="#ff6a00"/>
-    </linearGradient>
-    <radialGradient id="shine" cx="30%" cy="18%" r="75%">
-      <stop offset="0" stop-color="#ffffff" stop-opacity="0.22"/>
-      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
-    </radialGradient>
-  </defs>
-  <rect width="1024" height="1024" rx="230" fill="url(#g)"/>
-  <rect width="1024" height="1024" rx="230" fill="url(#shine)"/>
-  <g fill="#0a0a0a">
-    <path d="M452 210H572V490H690L512 690L334 490H452Z"/>
-    <rect x="292" y="760" width="440" height="68" rx="34"/>
-  </g>
-</svg>`;
+/** Logo en un lienzo de `size` px; `inset` deja margen alrededor (íconos de macOS). */
+function logoSvg(size, { inset = 0, shadow = false, id = 'g' } = {}) {
+  const s = size - inset * 2;
+  const k = s / 32;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <defs>
+      <linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#ff8248"/><stop offset="1" stop-color="#e5482a"/>
+      </linearGradient>
+      <filter id="${id}s" x="-20%" y="-20%" width="140%" height="140%">
+        <feDropShadow dx="0" dy="${size * 0.012}" stdDeviation="${size * 0.018}" flood-color="#000" flood-opacity="0.28"/>
+      </filter>
+    </defs>
+    <rect x="${inset}" y="${inset}" width="${s}" height="${s}" rx="${(shadow ? 7.2 : 9) * k}" fill="url(#${id})" ${shadow ? `filter="url(#${id}s)"` : ''}/>
+    <g transform="translate(${inset} ${inset}) scale(${k})" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none">${GLYPH}</g>
+  </svg>`;
+}
+
+const sidebar = `
+  <div style="width:164px;height:314px;position:relative;overflow:hidden;background:${BG};font-family:${FONT}">
+    <div style="position:absolute;inset:0;background:radial-gradient(120% 70% at 50% 0%, rgba(255,106,61,.28), transparent 70%)"></div>
+    <div style="position:absolute;left:0;right:0;bottom:0;height:3px;background:linear-gradient(90deg,#ff8248,#e5482a)"></div>
+    <div style="position:absolute;top:58px;left:0;right:0;display:flex;flex-direction:column;align-items:center">
+      <div style="filter:drop-shadow(0 8px 18px rgba(229,72,42,.45))">${logoSvg(64, { id: 'sb' })}</div>
+      <div style="margin-top:22px;color:#f2f2f4;font-size:20px;font-weight:700;letter-spacing:-.02em">Kerygma</div>
+      <div style="margin-top:1px;color:#a3a5ae;font-size:14px;font-weight:500">YT Downloader</div>
+    </div>
+    <div style="position:absolute;bottom:26px;left:0;right:0;text-align:center;color:#6e707a;font-size:10.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase">Video · Audio</div>
+  </div>`;
+
+const header = `
+  <div style="width:150px;height:57px;background:${BG};display:flex;align-items:center;gap:9px;padding-left:12px;box-sizing:border-box;font-family:${FONT}">
+    ${logoSvg(30, { id: 'hd' })}
+    <div style="line-height:1.1">
+      <div style="color:#f2f2f4;font-size:13px;font-weight:700;letter-spacing:-.01em">Kerygma</div>
+      <div style="color:#a3a5ae;font-size:10.5px">YT Downloader</div>
+    </div>
+  </div>`;
 
 app.disableHardwareAcceleration();
+app.on('window-all-closed', () => {}); // cada imagen usa su propia ventana
 
-app.whenReady().then(async () => {
+/**
+ * Renderiza HTML fuera de pantalla. En modo offscreen la imagen llega por el evento
+ * "paint" (capturePage puede no resolver nunca en Windows).
+ */
+async function render(markup, width, height, background = 'transparent') {
   const win = new BrowserWindow({
-    width: SIZE,
-    height: SIZE,
-    useContentSize: true,
-    show: false,
-    frame: false,
-    transparent: true,
-    resizable: false,
+    show: false, width, height, useContentSize: true, frame: false, transparent: background === 'transparent',
+    backgroundColor: background === 'transparent' ? '#00000000' : background,
     webPreferences: { offscreen: true },
   });
-
-  const html = `<html><body style="margin:0;background:transparent;overflow:hidden">${SVG}</body></html>`;
+  win.webContents.setFrameRate(30);
+  let last = null;
+  win.webContents.on('paint', (_e, _dirty, image) => { last = image; });
+  const html = `<html><body style="margin:0;background:${background};overflow:hidden">${markup}</body></html>`;
   await win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
-  await new Promise((r) => setTimeout(r, 500));
+  await new Promise((r) => setTimeout(r, 1200));
+  win.destroy();
+  if (!last) throw new Error('No se pudo renderizar la imagen');
+  return last.crop({ x: 0, y: 0, width, height }).resize({ width, height, quality: 'best' });
+}
 
-  let image = await win.webContents.capturePage();
-  const { width } = image.getSize();
-  if (width !== SIZE) image = image.resize({ width: SIZE, height: SIZE, quality: 'best' });
+/** BMP de 24 bits (el único formato que acepta NSIS), escrito a mano desde el bitmap BGRA. */
+function toBmp(image) {
+  const { width, height } = image.getSize();
+  const bgra = image.toBitmap();
+  const rowSize = Math.ceil((width * 3) / 4) * 4;
+  const data = Buffer.alloc(rowSize * height);
+  for (let y = 0; y < height; y++) {
+    const dst = (height - 1 - y) * rowSize; // BMP guarda las filas de abajo hacia arriba
+    for (let x = 0; x < width; x++) {
+      const src = (y * width + x) * 4;
+      data[dst + x * 3] = bgra[src];
+      data[dst + x * 3 + 1] = bgra[src + 1];
+      data[dst + x * 3 + 2] = bgra[src + 2];
+    }
+  }
+  const head = Buffer.alloc(54);
+  head.write('BM', 0, 'ascii');
+  head.writeUInt32LE(54 + data.length, 2);
+  head.writeUInt32LE(54, 10);
+  head.writeUInt32LE(40, 14);
+  head.writeInt32LE(width, 18);
+  head.writeInt32LE(height, 22);
+  head.writeUInt16LE(1, 26);
+  head.writeUInt16LE(24, 28);
+  head.writeUInt32LE(data.length, 34);
+  return Buffer.concat([head, data]);
+}
 
-  const out = path.join(__dirname, '..', 'build', 'icon.png');
+function save(file, buffer) {
+  const out = path.join(ROOT, file);
   fs.mkdirSync(path.dirname(out), { recursive: true });
-  fs.writeFileSync(out, image.toPNG());
+  fs.writeFileSync(out, buffer);
+  console.log(`✔ ${file}`);
+}
 
-  const small = path.join(__dirname, '..', 'src', 'renderer', 'assets', 'icon.png');
-  fs.mkdirSync(path.dirname(small), { recursive: true });
-  fs.writeFileSync(small, image.resize({ width: 512, height: 512, quality: 'best' }).toPNG());
-
-  console.log(`Ícono generado: ${out}`);
-  app.quit();
+app.whenReady().then(async () => {
+  try {
+    const icon = await render(logoSvg(1024), 1024, 1024);
+    save('build/icon.png', icon.toPNG());
+    save('src/renderer/assets/icon.png', icon.resize({ width: 512, height: 512, quality: 'best' }).toPNG());
+    save('build/icon-mac.png', (await render(logoSvg(1024, { inset: 100, shadow: true }), 1024, 1024)).toPNG());
+    save('build/installerSidebar.bmp', toBmp(await render(sidebar, 164, 314, BG)));
+    save('build/installerHeader.bmp', toBmp(await render(header, 150, 57, BG)));
+  } catch (err) {
+    console.error(err);
+    process.exitCode = 1;
+  }
+  app.exit();
 });

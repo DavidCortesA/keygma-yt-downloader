@@ -1,9 +1,9 @@
+# Compila Kerygma YT Downloader en cada sistema y, al subir una etiqueta "v*"
+# (git tag v1.0.0 && git push origin v1.0.0), publica un GitHub Release con cada
+# instalador como descarga independiente. Lanzado a mano desde Actions, solo compila
+# y deja cada versión como un artifact separado.
 name: Build & Release
 
-# Compila nativamente en cada sistema operativo (la forma más fiable de obtener
-# el .exe portable de Windows con su ícono y metadatos correctos) y, al subir una
-# etiqueta "v*" (ej. v1.0.0), publica un GitHub Release con los archivos portables.
-# También se puede lanzar a mano desde la pestaña Actions (solo compila, no publica).
 on:
   push:
     tags: ['v*']
@@ -13,47 +13,85 @@ permissions:
   contents: write
 
 jobs:
-  windows:
-    runs-on: windows-latest
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: win-x64
+          - os: macos-latest
+            target: mac-arm64
+            arch: arm64
+            label: Apple-Silicon
+          - os: macos-latest
+            target: mac-x64
+            arch: x64
+            label: Intel
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npm run dist:win
-      - uses: actions/upload-artifact@v4
-        with:
-          name: kerygma-windows-portable
-          path: dist/*-portable.exe
 
-  macos:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+
       - run: npm ci
-      - run: npm run dist:mac
-      - uses: actions/upload-artifact@v4
+
+      # yt-dlp y ffmpeg de la plataforma destino (se empaquetan dentro de la app).
+      - run: node scripts/fetch-binaries.js ${{ matrix.target }}
+
+      - name: Pruebas sin conexión
+        run: npm test
+
+      - name: Empaquetar Windows
+        if: runner.os == 'Windows'
+        run: npx electron-builder --win --x64 --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      # El .dmg lleva el tipo de Mac (Apple-Silicon / Intel) en lugar de arm64 / x64.
+      - name: Empaquetar Mac
+        if: runner.os == 'macOS'
+        run: npx electron-builder --mac --${{ matrix.arch }} --publish never "-c.dmg.artifactName=Kerygma-YT-Downloader-\${version}-Mac-${{ matrix.label }}.\${ext}"
+
+      - name: Subir instalador de Windows
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
         with:
-          name: kerygma-macos-portable
-          path: dist/*.zip
+          name: Kerygma YT Downloader - Windows Instalador
+          path: dist/Kerygma-YT-Downloader-*-Windows-Instalador.exe
+          if-no-files-found: error
+
+      - name: Subir versión portable de Windows
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Kerygma YT Downloader - Windows Portable
+          path: dist/Kerygma-YT-Downloader-*-Windows-Portable.exe
+          if-no-files-found: error
+
+      - name: Subir instalador de Mac
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Kerygma YT Downloader - Mac ${{ matrix.label }}
+          path: dist/Kerygma-YT-Downloader-*-Mac-${{ matrix.label }}.dmg
+          if-no-files-found: error
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [windows, macos]
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
         with:
-          path: release-files
+          path: instaladores
           merge-multiple: true
+
       - uses: softprops/action-gh-release@v2
         with:
           name: Kerygma YT Downloader ${{ github.ref_name }}
           generate_release_notes: true
-          files: release-files/*
+          files: instaladores/*

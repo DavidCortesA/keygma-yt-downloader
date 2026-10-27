@@ -363,8 +363,13 @@
     }
 
     const name = item.status === 'done' ? basename(item.filePath) : item.title;
+    const tile = item.thumbnail
+      ? h('div', { class: 'item-tile thumb' },
+        h('img', { src: item.thumbnail, alt: '', draggable: 'false', onerror: (e) => e.target.remove() }),
+        h('span', { class: 'tile-badge', text: item.ext }))
+      : h('div', { class: 'item-tile', text: item.ext });
     const li = h('li', { class: `item ${item.status}`, 'data-id': String(item.id) },
-      h('div', { class: 'item-tile', text: item.ext }),
+      tile,
       h('div', { class: 'item-body' }, h('div', { class: 'item-name', title: name, text: name }), itemMeta(item)),
       actions
     );
@@ -520,6 +525,7 @@
       kind: mode,
       ext: (mode === 'audio' ? s.audio.format : s.video.container).toUpperCase(),
       title: state.info.title,
+      thumbnail: state.info.thumbnail || '',
       status: 'active',
       percent: 0,
       stage: 'Preparando',

@@ -62,7 +62,9 @@ ipcMain.handle('shell:openFolder', () => {});
 ipcMain.handle('engine:update', () => ({ message: 'Ya tienes la última versión', engineVersion: '2026.10.26' }));
 
 async function shot(win, name) {
-  await sleep(400);
+  // Fuerza un repintado: con la ventana en segundo plano, capturePage puede devolver el cuadro anterior.
+  win.webContents.invalidate();
+  await sleep(600);
   const image = await win.webContents.capturePage();
   fs.writeFileSync(path.join(outDir, name), image.toPNG());
   console.log(`✔ ${name}`);
@@ -76,8 +78,9 @@ app.whenReady().then(async () => {
   const win = new BrowserWindow({
     width: 1120, height: 820, show: true,
     backgroundColor: '#0e0e10',
-    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
-    webPreferences: { preload: path.join(__dirname, '..', 'preload.js'), contextIsolation: true, sandbox: true },
+    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'hidden',
+    ...(process.platform === 'darwin' ? {} : { titleBarOverlay: { color: '#0e0e10', symbolColor: '#8e8e98', height: 60 } }),
+    webPreferences: { preload: path.join(__dirname, '..', 'preload.js'), contextIsolation: true, sandbox: true, backgroundThrottling: false },
   });
   await win.loadFile(path.join(__dirname, '..', 'src', 'renderer', 'index.html'));
   await sleep(500);
