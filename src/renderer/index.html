@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; img-src 'self' data: https:; style-src 'self'; script-src 'self'; connect-src 'none'; object-src 'none'" />
+        content="default-src 'self'; img-src 'self' data: https:; media-src 'none'; style-src 'self'; script-src 'self'; connect-src 'none'; object-src 'none'" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="dark light" />
   <title>Kerygma Downloader</title>
@@ -16,7 +16,10 @@
       <symbol id="i-video" viewBox="0 0 24 24"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/><rect x="2" y="6" width="14" height="12" rx="2"/></symbol>
       <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></symbol>
       <symbol id="i-settings" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></symbol>
+      <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
       <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+      <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
       <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></symbol>
       <symbol id="i-clipboard" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></symbol>
       <symbol id="i-folder" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></symbol>
@@ -25,6 +28,7 @@
       <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
       <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
       <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></symbol>
+      <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"/></symbol>
     </defs>
   </svg>
 
@@ -44,63 +48,88 @@
       <span class="brand-sub">Downloader</span>
     </div>
 
-    <nav class="tabs" role="tablist" aria-label="Tipo de descarga">
+    <nav class="tabs" role="tablist" data-i18n-aria="tabs.aria">
       <button class="tab active" data-tab="video" role="tab" aria-selected="true">
-        <svg class="icon"><use href="#i-video" /></svg><span>Video</span>
+        <svg class="icon"><use href="#i-video" /></svg><span data-i18n="tab.video">Video</span>
       </button>
       <button class="tab" data-tab="audio" role="tab" aria-selected="false">
-        <svg class="icon"><use href="#i-music" /></svg><span>Audio</span>
+        <svg class="icon"><use href="#i-music" /></svg><span data-i18n="tab.audio">Audio</span>
       </button>
     </nav>
 
-    <button id="settingsBtn" class="icon-btn" title="Configuración" aria-label="Configuración">
-      <svg class="icon"><use href="#i-settings" /></svg>
-    </button>
+    <div class="top-actions">
+      <button id="historyBtn" class="icon-btn" data-i18n-title="btn.history" data-i18n-aria="btn.history">
+        <svg class="icon"><use href="#i-history" /></svg>
+      </button>
+      <button id="settingsBtn" class="icon-btn" data-i18n-title="btn.settings" data-i18n-aria="btn.settings">
+        <svg class="icon"><use href="#i-settings" /></svg>
+      </button>
+    </div>
   </header>
 
   <div class="layout">
     <!-- ============ Columna principal ============ -->
     <section class="main-col">
       <div id="engineError" class="banner error hidden" role="alert"></div>
+      <div id="updateBanner" class="banner update hidden" role="status">
+        <svg class="icon"><use href="#i-sparkle" /></svg>
+        <span id="updateText"></span>
+        <button id="updateAction" class="btn small"></button>
+      </div>
 
       <div class="page-head">
         <div>
-          <h1 id="pageTitle">Descargar video</h1>
-          <p id="pageSub" class="muted">Pega el enlace de un video y guárdalo con audio.</p>
+          <h1 id="pageTitle"></h1>
+          <p id="pageSub" class="muted"></p>
         </div>
         <div id="listMeta" class="list-meta hidden">
           <span id="listCount" class="muted"></span>
-          <button id="clearList" class="link-btn">Limpiar lista</button>
+          <button id="clearList" class="link-btn" data-i18n="list.clear"></button>
         </div>
       </div>
 
       <div class="url-row">
         <svg class="icon url-icon"><use href="#i-link" /></svg>
-        <input id="url" type="text" placeholder="Enlace de YouTube, Facebook, TikTok, Instagram o Vimeo" autocomplete="off" spellcheck="false" aria-label="Enlace del video" />
-        <button id="pasteBtn" class="btn ghost small"><svg class="icon"><use href="#i-clipboard" /></svg>Pegar</button>
+        <input id="url" type="text" autocomplete="off" spellcheck="false" data-i18n-placeholder="url.placeholder" data-i18n-aria="url.aria" />
+        <button id="pasteBtn" class="btn ghost small"><svg class="icon"><use href="#i-clipboard" /></svg><span data-i18n="btn.paste"></span></button>
       </div>
       <div id="urlHint" class="hint" aria-live="polite"></div>
 
+      <div id="clipOffer" class="clip-offer hidden">
+        <svg class="icon"><use href="#i-clipboard" /></svg>
+        <div class="clip-text">
+          <b data-i18n="clip.found"></b>
+          <span id="clipUrl"></span>
+        </div>
+        <button id="clipUse" class="btn small" data-i18n="clip.use"></button>
+        <button id="clipDismiss" class="mini-btn" data-i18n-title="clip.dismiss" data-i18n-aria="clip.dismiss"><svg class="icon"><use href="#i-x" /></svg></button>
+      </div>
+
       <div id="previewLoading" class="loading-card hidden">
         <div class="spinner" aria-hidden="true"></div>
-        <span>Buscando video…</span>
+        <span data-i18n="loading"></span>
       </div>
 
       <div id="preview" class="preview-card hidden">
         <div class="thumb">
           <img id="thumb" alt="" />
           <span id="duration" class="badge"></span>
+          <span id="listBadge" class="badge list hidden"><svg class="icon sm"><use href="#i-list" /></svg></span>
         </div>
         <div class="meta">
           <div id="title" class="title"></div>
           <div id="uploader" class="muted"></div>
+          <div id="previewExtra" class="preview-extra hidden">
+            <span id="previewExtraText" class="muted"></span>
+            <button id="previewExtraBtn" class="link-btn accent"></button>
+          </div>
         </div>
       </div>
 
-      <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="Pegar enlace del portapapeles">
+      <div id="dropzone" class="dropzone" tabindex="0" role="button" data-i18n-aria="dz.aria">
         <div class="dz-icon"><svg class="icon"><use href="#i-link" /></svg></div>
-        <div class="dz-title">Arrastra un enlace aquí</div>
-        <div class="dz-sub">o <span class="accent-link">haz clic para pegarlo</span> desde el portapapeles</div>
+        <div class="dz-title" data-i18n="dz.title"></div>
+        <div class="dz-sub" data-i18n-html="dz.sub"></div>
         <div class="dz-chips">
           <span>YouTube</span><span>Facebook</span><span>TikTok</span><span>Instagram</span><span>Vimeo</span>
         </div>
@@ -112,103 +141,171 @@
     <!-- ============ Panel de opciones ============ -->
     <aside class="side-panel">
       <div class="side-scroll">
+        <div id="presetSection" class="field">
+          <div class="field-label" data-i18n="g.preset"></div>
+          <div id="presetGrid" class="chip-grid two"></div>
+          <p id="presetDesc" class="muted desc"></p>
+        </div>
+
         <div id="formatSection" class="field">
-          <div class="field-label">Formato de salida</div>
+          <div class="field-label" data-i18n="g.format"></div>
           <div id="formatGrid" class="chip-grid"></div>
           <p id="formatDesc" class="muted desc"></p>
         </div>
 
         <div id="qualitySection" class="field">
-          <div class="field-label"><span id="qualityLabel">Calidad</span><span id="qualityUnit" class="unit"></span></div>
+          <div class="field-label"><span data-i18n="g.quality"></span><span id="qualityUnit" class="unit"></span></div>
           <div id="qualitySeg" class="seg-control"></div>
           <p id="qualityDesc" class="muted desc"></p>
         </div>
 
-        <div class="field">
+        <div id="subsSection" class="field">
+          <div class="field-label" data-i18n="g.subtitles"></div>
+          <div id="subsSeg" class="seg-control"></div>
+          <div id="subModeSeg" class="seg-control two sub-mode hidden"></div>
+          <p class="muted desc" data-i18n="subs.desc"></p>
+        </div>
+
+        <div id="audioExtras" class="field">
           <div class="field-row">
-            <div class="field-label no-margin"><svg class="icon sm"><use href="#i-scissors" /></svg>Recortar fragmento</div>
-            <label class="switch" title="Descargar solo una parte">
+            <div class="field-label no-margin" data-i18n="g.normalize"></div>
+            <label class="switch"><input type="checkbox" id="normalizeToggle" /><span class="slider"></span></label>
+          </div>
+          <p class="muted desc tight" data-i18n="normalize.desc"></p>
+          <div class="field-row spaced">
+            <div class="field-label no-margin" data-i18n="g.cover"></div>
+            <label class="switch"><input type="checkbox" id="coverToggle" /><span class="slider"></span></label>
+          </div>
+          <p id="coverDesc" class="muted desc tight"></p>
+        </div>
+
+        <div id="trimSection" class="field">
+          <div class="field-row">
+            <div class="field-label no-margin"><svg class="icon sm"><use href="#i-scissors" /></svg><span data-i18n="g.trim"></span></div>
+            <label class="switch" data-i18n-title="g.trim.title">
               <input type="checkbox" id="trimToggle" />
               <span class="slider"></span>
             </label>
           </div>
           <div id="trimFields" class="trim-fields hidden">
             <div class="time-field">
-              <span>Desde</span>
+              <span data-i18n="trim.from"></span>
               <input id="trimStart" type="text" inputmode="numeric" placeholder="0:00" autocomplete="off" spellcheck="false" />
             </div>
             <div class="time-field">
-              <span>Hasta</span>
-              <input id="trimEnd" type="text" inputmode="numeric" placeholder="fin del video" autocomplete="off" spellcheck="false" />
+              <span data-i18n="trim.to"></span>
+              <input id="trimEnd" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" />
             </div>
           </div>
           <p id="trimHint" class="desc hidden" aria-live="polite"></p>
         </div>
 
         <div class="field">
-          <div class="field-label">Guardar en</div>
+          <div class="field-label" data-i18n="g.dest"></div>
           <div class="seg-control two">
-            <button id="openFolder" class="seg-item folder" title="Abrir carpeta de destino"><span id="folderName"></span></button>
-            <button id="changeFolder" class="seg-item">Otra carpeta…</button>
+            <button id="openFolder" class="seg-item folder"><span id="folderName"></span></button>
+            <button id="changeFolder" class="seg-item" data-i18n="g.otherFolder"></button>
           </div>
         </div>
       </div>
 
       <div class="side-foot">
-        <div id="statusText" class="status-text">Pega un enlace para empezar</div>
-        <button id="downloadBtn" class="btn primary" disabled>Descargar video</button>
+        <div id="statusText" class="status-text"></div>
+        <div class="foot-buttons">
+          <button id="downloadBtn" class="btn primary" disabled></button>
+          <button id="stopBtn" class="btn ghost stop hidden" data-i18n="btn.stopAll"></button>
+        </div>
       </div>
     </aside>
+  </div>
+
+  <!-- ============ Historial ============ -->
+  <div id="historyModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="historyTitle">
+    <div class="modal-card wide">
+      <div class="modal-head">
+        <h2 id="historyTitle" data-i18n="hist.title"></h2>
+        <button id="historyClose" class="icon-btn plain" data-i18n-aria="btn.close"><svg class="icon"><use href="#i-x" /></svg></button>
+      </div>
+      <div class="hist-search">
+        <svg class="icon"><use href="#i-search" /></svg>
+        <input id="histSearch" type="search" autocomplete="off" spellcheck="false" data-i18n-placeholder="hist.search" />
+      </div>
+      <ul id="histList" class="hist-list"></ul>
+      <div class="modal-foot">
+        <span id="histCount" class="muted"></span>
+        <button id="histClear" class="link-btn danger" data-i18n="hist.clear"></button>
+      </div>
+    </div>
   </div>
 
   <!-- ============ Configuración ============ -->
   <div id="modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal-card">
       <div class="modal-head">
-        <h2 id="modalTitle">Configuración</h2>
-        <button id="modalClose" class="icon-btn plain" aria-label="Cerrar"><svg class="icon"><use href="#i-x" /></svg></button>
+        <h2 id="modalTitle" data-i18n="s.title"></h2>
+        <button id="modalClose" class="icon-btn plain" data-i18n-aria="btn.close"><svg class="icon"><use href="#i-x" /></svg></button>
       </div>
       <div class="modal-body">
-        <div class="group-label">Apariencia</div>
+        <div class="group-label" data-i18n="s.appearance"></div>
         <div class="setting">
-          <div class="setting-text"><b>Tema</b><span>Por defecto, oscuro con acentos naranja.</span></div>
+          <div class="setting-text"><b data-i18n="s.theme"></b><span data-i18n="s.theme.desc"></span></div>
           <div class="seg-control compact" data-setting="theme">
-            <button class="seg-item" data-value="system">Sistema</button>
-            <button class="seg-item" data-value="light">Claro</button>
-            <button class="seg-item" data-value="dark">Oscuro</button>
+            <button class="seg-item" data-value="system" data-i18n="s.theme.system"></button>
+            <button class="seg-item" data-value="light" data-i18n="s.theme.light"></button>
+            <button class="seg-item" data-value="dark" data-i18n="s.theme.dark"></button>
+          </div>
+        </div>
+        <div class="setting">
+          <div class="setting-text"><b data-i18n="s.language"></b><span data-i18n="s.language.desc"></span></div>
+          <div class="seg-control compact" data-setting="language">
+            <button class="seg-item" data-value="system" data-i18n="s.language.system"></button>
+            <button class="seg-item" data-value="es">Español</button>
+            <button class="seg-item" data-value="en">English</button>
           </div>
         </div>
 
-        <div class="group-label">Descarga</div>
+        <div class="group-label" data-i18n="s.download"></div>
         <div class="setting">
-          <div class="setting-text"><b>Si el archivo ya existe</b><span>Crear copia guarda como «nombre (2)»; Reemplazar sobrescribe el anterior.</span></div>
+          <div class="setting-text"><b data-i18n="s.onExists"></b><span data-i18n="s.onExists.desc"></span></div>
           <div class="seg-control compact" data-setting="onExists">
-            <button class="seg-item" data-value="copy">Crear copia</button>
-            <button class="seg-item" data-value="replace">Reemplazar</button>
+            <button class="seg-item" data-value="copy" data-i18n="s.onExists.copy"></button>
+            <button class="seg-item" data-value="replace" data-i18n="s.onExists.replace"></button>
           </div>
         </div>
         <div class="setting">
-          <div class="setting-text"><b>Recordar formato y opciones</b><span>Al abrir, se recuerda la última pestaña, formato, calidad y carpeta de destino.</span></div>
+          <div class="setting-text"><b data-i18n="s.remember"></b><span data-i18n="s.remember.desc"></span></div>
           <label class="switch"><input type="checkbox" data-setting="remember" /><span class="slider"></span></label>
         </div>
-
-        <div class="group-label">Al terminar</div>
         <div class="setting">
-          <div class="setting-text"><b>Notificación del sistema</b><span>Avisa cuando termina una descarga y la app está en segundo plano.</span></div>
+          <div class="setting-text"><b data-i18n="s.watchClipboard"></b><span data-i18n="s.watchClipboard.desc"></span></div>
+          <label class="switch"><input type="checkbox" data-setting="watchClipboard" /><span class="slider"></span></label>
+        </div>
+
+        <div class="group-label" data-i18n="s.finish"></div>
+        <div class="setting">
+          <div class="setting-text"><b data-i18n="s.notify"></b><span data-i18n="s.notify.desc"></span></div>
           <label class="switch"><input type="checkbox" data-setting="notify" /><span class="slider"></span></label>
         </div>
         <div class="setting">
-          <div class="setting-text"><b>Abrir la carpeta de destino</b><span>Muestra el archivo descargado en el Explorador o en Finder.</span></div>
+          <div class="setting-text"><b data-i18n="s.openFolder"></b><span data-i18n="s.openFolder.desc"></span></div>
           <label class="switch"><input type="checkbox" data-setting="openFolder" /><span class="slider"></span></label>
         </div>
 
-        <div class="group-label">Motor de descarga</div>
+        <div class="group-label" data-i18n="s.engine"></div>
         <div class="setting">
-          <div class="setting-text"><b>yt-dlp <span id="engineVersion" class="muted">…</span></b><span>Si un sitio cambia algo y las descargas fallan, actualiza el motor sin reinstalar la app.</span></div>
-          <button id="updateBtn" class="btn ghost small"><svg class="icon"><use href="#i-refresh" /></svg><span>Actualizar</span></button>
+          <div class="setting-text"><b>yt-dlp <span id="engineVersion" class="muted">…</span></b><span data-i18n="s.engine.desc"></span></div>
+          <button id="updateBtn" class="btn ghost small"><svg class="icon"><use href="#i-refresh" /></svg><span data-i18n="s.engine.update"></span></button>
+        </div>
+        <div class="setting">
+          <div class="setting-text"><b data-i18n="s.autoUpdateEngine"></b><span data-i18n="s.autoUpdateEngine.desc"></span></div>
+          <label class="switch"><input type="checkbox" data-setting="autoUpdateEngine" /><span class="slider"></span></label>
+        </div>
+        <div class="setting">
+          <div class="setting-text"><b data-i18n="s.checkAppUpdates"></b><span data-i18n="s.checkAppUpdates.desc"></span></div>
+          <label class="switch"><input type="checkbox" data-setting="checkAppUpdates" /><span class="slider"></span></label>
         </div>
 
-        <div class="group-label">Acerca de</div>
+        <div class="group-label" data-i18n="s.about"></div>
         <div class="about">
           <svg class="logo big" viewBox="0 0 32 32" aria-hidden="true">
             <rect width="32" height="32" rx="9" fill="url(#lg)" />
@@ -219,12 +316,13 @@
             <span id="aboutLine"></span>
           </div>
         </div>
-        <p class="legal">Descarga solo contenido que tengas derecho a descargar y respeta los Términos de Servicio de cada sitio.</p>
+        <p class="legal" data-i18n="s.legal"></p>
       </div>
     </div>
   </div>
 
   <div id="toast" class="toast hidden" role="status"></div>
+  <script src="i18n.js"></script>
   <script src="renderer.js"></script>
 </body>
 </html>

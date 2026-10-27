@@ -36,17 +36,54 @@ const PLATFORMS = [
   },
 ];
 
+// Listas y canales de YouTube: se descargan video por video.
+const YT_PLAYLIST = /^(https?:\/\/)?(www\.|m\.|music\.)?youtube\.com\/playlist\?(.*&)?list=[\w-]+/i;
+const YT_CHANNEL = /^(https?:\/\/)?(www\.|m\.)?youtube\.com\/(@[\w.-]+|channel\/[\w-]+|c\/[\w.-]+|user\/[\w.-]+)(\/(videos|shorts|streams|featured))?\/?(\?.*)?$/i;
+const LIST_PARAM = /[?&]list=([\w-]+)/;
+
 const WINDOWS_RESERVED = /^(con|prn|aux|nul|com\d|lpt\d)$/i;
 
-/** Plataforma del enlace ({ id, name }) o null si no es de un sitio admitido. */
+/**
+ * Plataforma del enlace o null si no es de un sitio admitido:
+ * { id, name, kind: 'video'|'playlist', listUrl? }. listUrl aparece cuando un video de
+ * YouTube forma parte de una lista (watch?v=...&list=...), para ofrecer la lista completa.
+ */
 function detectPlatform(url) {
   if (typeof url !== 'string') return null;
   const text = url.trim();
+  if (YT_PLAYLIST.test(text) || YT_CHANNEL.test(text)) return { id: 'youtube', name: 'YouTube', kind: 'playlist' };
   const found = PLATFORMS.find((p) => p.pattern.test(text));
-  return found ? { id: found.id, name: found.name } : null;
+  if (!found) return null;
+  const result = { id: found.id, name: found.name, kind: 'video' };
+  const list = found.id === 'youtube' && LIST_PARAM.exec(text);
+  // Las listas "RD..." son mixes automáticos e infinitos de YouTube: no se ofrecen.
+  if (list && !list[1].startsWith('RD')) result.listUrl = `https://www.youtube.com/playlist?list=${list[1]}`;
+  return result;
 }
 
 const isSupportedUrl = (url) => detectPlatform(url) !== null;
+
+/**
+ * Enlace que se le pasa a yt-dlp para listar. Un canal sin pestaña se lista desde
+ * "/videos": si no, yt-dlp devuelve las pestañas (Videos, Shorts, En vivo) y no los videos.
+ */
+function listingUrl(url) {
+  const text = url.trim();
+  const m = YT_CHANNEL.exec(text);
+  if (m && !m[4]) return `https://www.youtube.com/${m[3]}/videos`;
+  return /^https?:\/\//i.test(text) ? text : `https://${text}`;
+}
+
+/** Separa un texto pegado en enlaces (uno por línea o separados por espacios), sin repetidos. */
+function splitLinks(text) {
+  if (typeof text !== 'string') return [];
+  const seen = new Set();
+  return text.split(/[\s,]+/).map((t) => t.trim()).filter((t) => {
+    if (!t || seen.has(t) || !isSupportedUrl(t)) return false;
+    seen.add(t);
+    return true;
+  });
+}
 
 /**
  * Convierte un título en un nombre de archivo válido en Windows y macOS.
@@ -64,4 +101,4 @@ function sanitizeFilename(name) {
   return safe;
 }
 
-module.exports = { PLATFORMS, detectPlatform, isSupportedUrl, sanitizeFilename };
+module.exports = { PLATFORMS, detectPlatform, isSupportedUrl, listingUrl, splitLinks, sanitizeFilename };

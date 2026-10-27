@@ -1,17 +1,19 @@
-const { app, BrowserWindow, ipcMain, dialog, shell, Menu, Notification, nativeTheme } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell, Menu, Notification, nativeTheme, clipboard } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const { randomUUID } = require('crypto');
 
-const { resolveBinaries } = require('./src/core/binaries');
+const { resolveBinaries, readVersion } = require('./src/core/binaries');
 const ytdlp = require('./src/core/ytdlp');
-const { isSupportedUrl, detectPlatform } = require('./src/core/validate');
-const { readVersion } = require('./src/core/binaries');
+const { isSupportedUrl, detectPlatform, listingUrl } = require('./src/core/validate');
 const settingsSchema = require('./src/core/settings');
+const { createHistory } = require('./src/core/history');
+const updates = require('./src/core/updates');
+const { KgError } = require('./src/core/errors');
 
 const APP_NAME = 'Kerygma Downloader';
 const IS_MAC = process.platform === 'darwin';
-const UNSUPPORTED_URL = 'El enlace no es de un video de YouTube, Facebook, TikTok, Instagram o Vimeo.';
+const ENGINE_CHECK_EVERY = 20 * 60 * 60 * 1000; // el motor se revisa como máximo una vez al día
 
 /* ------------------------------------------------------------------ */
 /* Modo portable: dónde guardar la configuración                       */
@@ -82,13 +84,42 @@ function saveSettings(patch) {
   fs.mkdirSync(path.dirname(settingsFile()), { recursive: true });
   fs.writeFileSync(settingsFile(), JSON.stringify(stored, null, 2));
   nativeTheme.themeSource = stored.theme;
+  if ('language' in patch) buildMenu();
   return loadSettings();
 }
+
+let history = null;
+
+/* ------------------------------------------------------------------ */
+/* Idioma de los textos del proceso principal                          */
+/* ------------------------------------------------------------------ */
+// El resto de la interfaz se traduce en src/renderer/i18n.js.
+const TEXT = {
+  es: {
+    folderTitle: 'Carpeta de destino', done: 'Descarga completa',
+    about: 'Acerca de', hide: 'Ocultar', quit: 'Salir', edit: 'Edición', undo: 'Deshacer', redo: 'Rehacer',
+    cut: 'Cortar', copy: 'Copiar', paste: 'Pegar', selectAll: 'Seleccionar todo', window: 'Ventana', minimize: 'Minimizar', close: 'Cerrar',
+  },
+  en: {
+    folderTitle: 'Destination folder', done: 'Download complete',
+    about: 'About', hide: 'Hide', quit: 'Quit', edit: 'Edit', undo: 'Undo', redo: 'Redo',
+    cut: 'Cut', copy: 'Copy', paste: 'Paste', selectAll: 'Select all', window: 'Window', minimize: 'Minimize', close: 'Close',
+  },
+};
+
+/** Idioma efectivo: el elegido, o el del sistema (español si empieza por "es"; si no, inglés). */
+function language() {
+  const choice = loadSettings().language;
+  if (choice === 'es' || choice === 'en') return choice;
+  return app.getLocale().toLowerCase().startsWith('es') ? 'es' : 'en';
+}
+const tx = () => TEXT[language()];
 
 /* ------------------------------------------------------------------ */
 /* Motor (yt-dlp + ffmpeg)                                             */
 /* ------------------------------------------------------------------ */
 let binsPromise = null;
+const engineDir = () => path.join(app.getPath('cache'), APP_NAME, 'engine');
 
 function loadBins(force = false) {
   if (!binsPromise || force) {
@@ -96,7 +127,7 @@ function loadBins(force = false) {
       isPackaged: app.isPackaged,
       resourcesPath: process.resourcesPath,
       projectRoot: __dirname,
-      engineDir: path.join(app.getPath('cache'), APP_NAME, 'engine'),
+      engineDir: engineDir(),
       appVersion: app.getVersion(),
     });
   }
@@ -116,11 +147,85 @@ async function engineVersion(force = false) {
   return versionPromise;
 }
 
+let engineUpdating = null;
+
+/** yt-dlp -U; devuelve { message, engineVersion, changed }. */
+function updateEngineNow() {
+  if (!engineUpdating) {
+    engineUpdating = (async () => {
+      const bins = await loadBins();
+      const before = await engineVersion();
+      const message = await ytdlp.updateEngine(bins);
+      const after = await engineVersion(true);
+      fs.writeFileSync(path.join(engineDir(), '.last-check'), String(Date.now()));
+      return { message, engineVersion: after, changed: !!after && after !== before };
+    })().finally(() => { engineUpdating = null; });
+  }
+  return engineUpdating;
+}
+
+/**
+ * Los sitios cambian seguido y una versión vieja de yt-dlp deja de funcionar de un día
+ * para otro: al abrir la app se actualiza sola, una vez al día y nunca durante una descarga.
+ */
+async function autoUpdateEngine() {
+  if (!loadSettings().autoUpdateEngine) return;
+  let last = 0;
+  try {
+    last = Number(fs.readFileSync(path.join(engineDir(), '.last-check'), 'utf8')) || 0;
+  } catch {
+    /* nunca se revisó */
+  }
+  if (Date.now() - last < ENGINE_CHECK_EVERY || jobs.size > 0) return;
+  try {
+    const result = await updateEngineNow();
+    if (result.changed) send('engine:updated', { engineVersion: result.engineVersion });
+  } catch {
+    /* sin red o sin permisos: se reintenta la próxima vez */
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Actualizaciones de la app                                           */
+/* ------------------------------------------------------------------ */
+let appUpdate = null; // { version, url?, ready? }
+let autoUpdater = null;
+
+/** Windows instalado: descarga e instala solo. macOS y portable: aviso con enlace a la Release. */
+async function checkAppUpdates() {
+  if (!app.isPackaged || !loadSettings().checkAppUpdates) return;
+  const canInstall = process.platform === 'win32' && !process.env.PORTABLE_EXECUTABLE_DIR;
+  if (canInstall) {
+    try {
+      ({ autoUpdater } = require('electron-updater'));
+      autoUpdater.autoDownload = true;
+      autoUpdater.autoInstallOnAppQuit = true;
+      autoUpdater.on('update-downloaded', (info) => {
+        appUpdate = { version: info.version, ready: true };
+        send('app:update', appUpdate);
+      });
+      await autoUpdater.checkForUpdates();
+      return;
+    } catch {
+      autoUpdater = null; // si falla, al menos se avisa
+    }
+  }
+  const latest = await updates.checkLatest(app.getVersion());
+  if (latest) {
+    appUpdate = latest;
+    send('app:update', appUpdate);
+  }
+}
+
 /* ------------------------------------------------------------------ */
 /* Ventana                                                             */
 /* ------------------------------------------------------------------ */
 let mainWindow = null;
 const jobs = new Map(); // jobId -> { cancel }
+
+const send = (channel, payload) => {
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(channel, payload);
+};
 
 // En Windows y Linux los botones de la ventana se dibujan sobre la barra superior de la app
 // (como en Kerygma Converter); deben coincidir con --bg y --muted de styles.css.
@@ -164,12 +269,13 @@ function createWindow() {
 
   mainWindow.webContents.on('context-menu', (_e, params) => {
     if (!params.isEditable && !params.selectionText) return;
+    const t = tx();
     Menu.buildFromTemplate([
-      { label: 'Cortar', role: 'cut', enabled: params.editFlags.canCut },
-      { label: 'Copiar', role: 'copy', enabled: params.editFlags.canCopy },
-      { label: 'Pegar', role: 'paste', enabled: params.editFlags.canPaste },
+      { label: t.cut, role: 'cut', enabled: params.editFlags.canCut },
+      { label: t.copy, role: 'copy', enabled: params.editFlags.canCopy },
+      { label: t.paste, role: 'paste', enabled: params.editFlags.canPaste },
       { type: 'separator' },
-      { label: 'Seleccionar todo', role: 'selectAll' },
+      { label: t.selectAll, role: 'selectAll' },
     ]).popup();
   });
 
@@ -183,11 +289,12 @@ function buildMenu() {
     Menu.setApplicationMenu(null);
     return;
   }
+  const t = tx();
   Menu.setApplicationMenu(
     Menu.buildFromTemplate([
-      { label: APP_NAME, submenu: [{ role: 'about', label: `Acerca de ${APP_NAME}` }, { type: 'separator' }, { role: 'hide', label: 'Ocultar' }, { role: 'quit', label: 'Salir' }] },
-      { label: 'Edición', submenu: [{ role: 'undo', label: 'Deshacer' }, { role: 'redo', label: 'Rehacer' }, { type: 'separator' }, { role: 'cut', label: 'Cortar' }, { role: 'copy', label: 'Copiar' }, { role: 'paste', label: 'Pegar' }, { role: 'selectAll', label: 'Seleccionar todo' }] },
-      { label: 'Ventana', submenu: [{ role: 'minimize', label: 'Minimizar' }, { role: 'close', label: 'Cerrar' }] },
+      { label: APP_NAME, submenu: [{ role: 'about', label: `${t.about} ${APP_NAME}` }, { type: 'separator' }, { role: 'hide', label: t.hide }, { role: 'quit', label: t.quit }] },
+      { label: t.edit, submenu: [{ role: 'undo', label: t.undo }, { role: 'redo', label: t.redo }, { type: 'separator' }, { role: 'cut', label: t.cut }, { role: 'copy', label: t.copy }, { role: 'paste', label: t.paste }, { role: 'selectAll', label: t.selectAll }] },
+      { label: t.window, submenu: [{ role: 'minimize', label: t.minimize }, { role: 'close', label: t.close }] },
     ])
   );
 }
@@ -208,52 +315,60 @@ function registerIpc() {
       version: app.getVersion(),
       electron: process.versions.electron,
       platform: process.platform,
+      language: language(),
       settings: loadSettings(),
       engineError,
+      appUpdate,
     };
   });
 
   ipcMain.handle('engine:version', () => engineVersion().catch(() => null));
 
-  ipcMain.handle('settings:save', (_e, patch) => saveSettings(settingsSchema.sanitize(patch)));
+  ipcMain.handle('settings:save', (_e, patch) => {
+    const saved = saveSettings(settingsSchema.sanitize(patch));
+    return { settings: saved, language: language() };
+  });
 
   ipcMain.handle('dialog:chooseFolder', async (_e, current) => {
     const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
-      title: 'Carpeta de destino',
+      title: tx().folderTitle,
       defaultPath: typeof current === 'string' ? current : undefined,
       properties: ['openDirectory', 'createDirectory'],
     });
     return canceled ? null : filePaths[0];
   });
 
-  ipcMain.handle('video:info', async (_e, url) => {
-    if (!isSupportedUrl(url)) throw new Error(UNSUPPORTED_URL);
+  // Un video o, si el enlace es una lista o un canal (o playlist: true), la lista completa.
+  ipcMain.handle('video:info', async (_e, url, opts = {}) => {
+    const platform = detectPlatform(url);
+    if (!platform) throw new KgError('BAD_URL');
     const bins = await loadBins();
-    return { ...(await ytdlp.getInfo(bins, url.trim())), platform: detectPlatform(url).name };
+    const asList = platform.kind === 'playlist' || opts.playlist === true;
+    const target = asList && platform.listUrl && opts.playlist ? platform.listUrl : url;
+    const info = await ytdlp.getInfo(bins, asList ? listingUrl(target) : url.trim(), { playlist: asList });
+    return { ...info, platform: platform.name, listUrl: info.type === 'video' ? platform.listUrl || null : null };
   });
 
   ipcMain.handle('download:start', async (e, req) => {
-    if (jobs.size > 0) throw new Error('Ya hay una descarga en curso.');
-    if (!isSupportedUrl(req?.url)) throw new Error(UNSUPPORTED_URL);
-    if (!['video', 'audio'].includes(req.mode)) throw new Error('Tipo de descarga inválido.');
-    if (typeof req.outputDir !== 'string' || !req.outputDir) throw new Error('Elige una carpeta de destino.');
+    if (jobs.size > 0) throw new KgError('BUSY');
+    if (!isSupportedUrl(req?.url)) throw new KgError('BAD_URL');
+    if (!['video', 'audio'].includes(req.mode)) throw new KgError('BAD_OPTION', 'mode');
+    if (typeof req.outputDir !== 'string' || !req.outputDir) throw new KgError('NO_FOLDER');
 
-    // Mismas reglas de validación que la configuración (formato, calidad...).
+    // Mismas reglas de validación que la configuración (formato, calidad, destino...).
     const opts = settingsSchema.sanitize({ video: req.video, audio: req.audio });
 
     let section = null;
     if (req.section) {
       const { start, end } = req.section;
-      if (![start, end].every(Number.isFinite) || start < 0 || end - start < 1) {
-        throw new Error('El rango de tiempo no es válido.');
-      }
+      if (![start, end].every(Number.isFinite) || start < 0 || end - start < 1) throw new KgError('BAD_RANGE');
       section = { start, end };
     }
 
     const settings = loadSettings();
     const bins = await loadBins();
     const jobId = randomUUID();
-    const send = (payload) => {
+    const emit = (payload) => {
       if (!e.sender.isDestroyed()) e.sender.send('download:event', { jobId, ...payload });
     };
 
@@ -261,24 +376,30 @@ function registerIpc() {
       bins,
       {
         url: req.url.trim(),
-        title: req.title,
+        title: String(req.title || 'video'),
         mode: req.mode,
         outputDir: req.outputDir,
         overwrite: settings.onExists === 'replace',
+        duration: Number.isFinite(req.duration) ? req.duration : 0,
         video: opts.video,
         audio: opts.audio,
         section,
       },
-      send
+      emit
     );
     jobs.set(jobId, job);
 
     try {
       const result = await job.promise;
-      if (settings.notify && mainWindow && !mainWindow.isFocused() && Notification.isSupported()) {
-        new Notification({ title: 'Descarga completa', body: path.basename(result.filePath) }).show();
+      const ext = path.extname(result.filePath).slice(1).toUpperCase();
+      history.add({
+        title: req.title, url: req.url.trim(), platform: detectPlatform(req.url)?.name || '',
+        kind: req.mode, ext, filePath: result.filePath, size: result.size, thumbnail: req.thumbnail,
+      });
+      if (settings.notify && !req.silent && mainWindow && !mainWindow.isFocused() && Notification.isSupported()) {
+        new Notification({ title: tx().done, body: path.basename(result.filePath) }).show();
       }
-      if (settings.openFolder) shell.showItemInFolder(result.filePath);
+      if (settings.openFolder && !req.silent) shell.showItemInFolder(result.filePath);
       return result;
     } catch (err) {
       if (err instanceof ytdlp.CancelledError) return { cancelled: true };
@@ -303,10 +424,23 @@ function registerIpc() {
   });
 
   ipcMain.handle('engine:update', async () => {
-    if (jobs.size > 0) throw new Error('Espera a que termine la descarga en curso.');
-    const bins = await loadBins();
-    const message = await ytdlp.updateEngine(bins);
-    return { message, engineVersion: await engineVersion(true) };
+    if (jobs.size > 0) throw new KgError('BUSY');
+    return updateEngineNow();
+  });
+
+  ipcMain.handle('history:list', () => history.list());
+  ipcMain.handle('history:remove', (_e, id) => typeof id === 'string' && history.remove(id));
+  ipcMain.handle('history:clear', () => history.clear());
+
+  // Solo se devuelve si parece un enlace admitido: la app no lee nada más del portapapeles.
+  ipcMain.handle('clipboard:link', () => {
+    const text = clipboard.readText().trim();
+    return text.length < 4000 && text.split(/\s+/).some(isSupportedUrl) ? text : '';
+  });
+
+  ipcMain.handle('app:update-install', () => {
+    if (appUpdate?.ready && autoUpdater) autoUpdater.quitAndInstall();
+    else shell.openExternal(updates.RELEASES_URL);
   });
 }
 
@@ -328,11 +462,17 @@ if (!app.requestSingleInstanceLock()) {
   app.whenReady().then(() => {
     app.setAboutPanelOptions({ applicationName: APP_NAME, applicationVersion: app.getVersion() });
     migrateOldSettings();
+    history = createHistory(path.join(app.getPath('userData'), 'history.json'));
     nativeTheme.themeSource = loadSettings().theme;
     buildMenu();
     registerIpc();
     createWindow();
-    loadBins().then(() => engineVersion()).catch(() => {}); // precalienta el motor; el error se informa desde app:init
+    // Precalienta el motor; el error se informa desde app:init. Luego, revisiones en segundo plano.
+    loadBins()
+      .then(() => engineVersion())
+      .then(() => autoUpdateEngine())
+      .catch(() => {});
+    mainWindow.webContents.once('did-finish-load', () => setTimeout(checkAppUpdates, 4000));
 
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) createWindow();

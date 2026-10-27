@@ -384,6 +384,7 @@ h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.01em; }
 .desc.error { color: var(--danger); }
 
 .chip-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.chip-grid.two { grid-template-columns: repeat(2, 1fr); }
 .chip {
   padding: 10px 0;
   font-size: 12.5px; font-weight: 800; letter-spacing: 0.02em;
@@ -495,6 +496,76 @@ h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.01em; }
 .setting-text b .muted { font-weight: 500; }
 .about { display: flex; align-items: center; gap: 16px; padding: 14px 0 4px; }
 .legal { margin-top: 12px; font-size: 12px; color: var(--muted-2); }
+
+/* ---------- Barra superior: historial y configuración ---------- */
+.top-actions { justify-self: end; display: flex; gap: 4px; }
+.top-actions .icon-btn { justify-self: auto; }
+
+/* ---------- Aviso de versión nueva ---------- */
+.banner.update {
+  display: flex; align-items: center; gap: 12px;
+  color: var(--text); background: var(--accent-dim);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.banner.update .icon { color: var(--accent); flex: none; }
+.banner.update span { flex: 1; min-width: 0; font-weight: 600; }
+.banner.update .btn { flex: none; color: var(--on-accent); background: var(--accent); border-color: transparent; }
+.banner.update .btn:hover { background: var(--accent-2); }
+
+/* ---------- Enlace copiado ---------- */
+.clip-offer {
+  display: flex; align-items: center; gap: 12px;
+  margin-top: -6px; padding: 10px 10px 10px 14px;
+  background: var(--accent-dim);
+  border: 1px dashed color-mix(in srgb, var(--accent) 55%, transparent);
+  border-radius: 13px;
+}
+.clip-offer > .icon { color: var(--accent); flex: none; }
+.clip-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
+.clip-text span { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.clip-offer .btn { flex: none; }
+
+/* ---------- Vista previa: listas y varios enlaces ---------- */
+.thumb img.hidden { display: none; }
+.badge.list { left: 6px; right: auto; display: grid; place-items: center; padding: 3px 5px; }
+.preview-extra { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; margin-top: 10px; font-size: 13px; }
+.preview-extra .muted { margin: 0; }
+.link-btn.accent { color: var(--accent); }
+.link-btn.accent:hover { color: var(--accent-2); }
+.link-btn.danger:hover { color: var(--danger); }
+.link-btn:disabled { opacity: 0.4; cursor: default; }
+
+/* ---------- Panel: opciones nuevas ---------- */
+.field-row.spaced { margin-top: 14px; }
+.desc.tight { margin-top: 6px; }
+.sub-mode { margin-top: 8px; }
+.foot-buttons { display: flex; flex-direction: column; gap: 8px; }
+.btn.stop { min-height: 40px; }
+.btn.stop:hover:not(:disabled) { border-color: var(--danger) !important; color: var(--danger) !important; }
+
+/* ---------- Historial ---------- */
+.modal-card.wide { width: min(720px, 100%); height: min(640px, 100%); }
+.hist-search {
+  display: flex; align-items: center; gap: 10px;
+  margin: 16px 24px 4px; padding: 0 12px;
+  background: var(--field); border: 1px solid var(--line); border-radius: 12px;
+}
+.hist-search .icon { color: var(--muted); flex: none; }
+.hist-search input {
+  flex: 1; min-width: 0; padding: 11px 0;
+  font: inherit; font-size: 14px; color: var(--text);
+  background: none; border: none; outline: none;
+}
+.hist-list { flex: 1; min-height: 0; overflow-y: auto; list-style: none; margin: 0; padding: 10px 24px; display: flex; flex-direction: column; gap: 8px; }
+.hist-item {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px;
+  padding: 10px 12px;
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 13px;
+}
+.hist-item.missing .item-tile { opacity: 0.45; }
+.hist-item.missing .item-meta { color: var(--muted-2); }
+.hist-empty { padding: 40px 0; text-align: center; color: var(--muted); font-size: 14px; }
+.modal-foot { display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; border-top: 1px solid var(--line); font-size: 13px; }
 
 /* ---------- Adaptación a ventanas angostas ---------- */
 @media (max-width: 1040px) {
