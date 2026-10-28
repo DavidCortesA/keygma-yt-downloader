@@ -42,10 +42,34 @@ En la [página de Releases](https://github.com/DavidCortesA/keygma-yt-downloader
 | `Kerygma-Downloader-<versión>-Mac-Apple-Silicon.dmg` | Mac con chip M1, M2, M3 o posterior |
 | `Kerygma-Downloader-<versión>-Mac-Intel.dmg` | Mac con procesador Intel |
 
+¿No sabes cuál es tu Mac? Menú  → **Acerca de esta Mac**: si dice **Chip Apple M…** es Apple Silicon; si dice **Procesador Intel…** es Intel.
+
+> Hasta la 1.2.0 los dos `.dmg` de Mac salieron intercambiados y sin yt-dlp ni ffmpeg: el de Intel mostraba el círculo tachado y el de Apple Silicon abría pero daba error al descargar. Desde la 1.2.1 cada uno trae su arquitectura correcta.
+
 La app no está firmada con certificados de pago:
 
 - **Windows:** si SmartScreen muestra "Windows protegió su PC", haz clic en **Más información → Ejecutar de todas formas**.
-- **macOS:** la primera vez, clic derecho sobre la app → **Abrir** → **Abrir** (o `xattr -cr "/Applications/Kerygma Downloader.app"` en la Terminal).
+- **macOS:** mira [Instalar en Mac](#instalar-en-mac).
+
+### Instalar en Mac
+
+1. Abre el `.dmg` y arrastra **Kerygma Downloader** a la carpeta **Applications** (Aplicaciones).
+
+   <img src="docs/screenshots/mac-dmg.png" alt="Ventana del .dmg: arrastra Kerygma Downloader a Applications" width="540">
+
+2. Abre la app desde Aplicaciones. Como no está notarizada por Apple, la primera vez macOS dice que *no pudo verificar* que no contenga software malicioso: cierra ese aviso (no la mandes a la papelera).
+3. Ve a **Configuración del Sistema → Privacidad y seguridad**, baja hasta **Seguridad** y haz clic en **Abrir de todos modos** junto a "Se bloqueó Kerygma Downloader". Confirma con tu contraseña o Touch ID.
+
+   <img src="docs/screenshots/mac-seguridad.png" alt="Privacidad y seguridad con el botón Abrir de todos modos" width="580">
+
+   - En macOS 14 o anterior basta con clic derecho sobre la app → **Abrir** → **Abrir**.
+4. Si macOS dice que la app **está dañada**, quítale la marca de descarga en la Terminal y ábrela de nuevo:
+
+   ```bash
+   xattr -cr "/Applications/Kerygma Downloader.app"
+   ```
+
+Solo hace falta la primera vez; después se abre normal.
 
 Hasta la versión 1.0 la app se llamaba **Kerygma YT Downloader**. Al actualizar, el instalador reemplaza la versión anterior y la app conserva tu configuración.
 
@@ -121,6 +145,8 @@ Para admitir otro sitio que yt-dlp ya soporte, basta con agregarlo a `PLATFORMS`
 npm run dist:win   # instalador + portable de Windows (en Windows)
 npm run dist:mac   # .dmg para Intel y Apple Silicon (en macOS)
 ```
+
+La arquitectura la deciden `--x64` / `--arm64` en la línea de comandos (no la fijes en `build.mac.target`). Al empaquetar, `scripts/after-pack.js` detiene el build si la app no lleva yt-dlp y ffmpeg de su misma arquitectura.
 
 La forma recomendada es **GitHub Actions** ([`.github/workflows/build.yml`](.github/workflows/build.yml)): compila en Windows y en los dos tipos de Mac, corre las pruebas y, al subir una etiqueta, crea la Release con los cuatro archivos y `latest.yml` (lo que lee la app instalada para actualizarse):
 
